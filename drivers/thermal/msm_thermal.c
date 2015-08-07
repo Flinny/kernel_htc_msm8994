@@ -45,7 +45,6 @@
 #include <linux/notifier.h>
 #include <linux/reboot.h>
 #include <linux/htc_flags.h>
-#include <linux/suspend.h>
 #include <soc/qcom/msm-core.h>
 #include <linux/delay.h>
 #include <linux/cpumask.h>
@@ -469,25 +468,6 @@ static int msm_thermal_reboot_callback(
 	}
 
 	return NOTIFY_DONE;
-}
-
-static int msm_thermal_suspend_callback(
-	struct notifier_block *nfb, unsigned long action, void *data)
-{
-	switch (action) {
-	case PM_POST_HIBERNATION:
-	case PM_POST_SUSPEND:
-		if (hotplug_task)
-			complete(&hotplug_notify_complete);
-		else
-			pr_debug("Hotplug task not initialized\n");
-		break;
-
-	default:
-		return NOTIFY_DONE;
-	}
-
-	return NOTIFY_OK;
 }
 
 static struct notifier_block msm_thermal_reboot_notifier = {
@@ -1357,7 +1337,7 @@ static int update_cpu_min_freq_all(uint32_t min)
 			return ret;
 		}
 	}
-	/* If min is larger than allowed max */
+	
 	if (core_ptr) {
 		for (; _cluster < core_ptr->entity_count; _cluster++) {
 			cluster_ptr = &core_ptr->child_entity_ptr[_cluster];
@@ -1399,7 +1379,7 @@ static int vdd_restriction_apply_freq(struct rail *r, int level)
 	if (level == r->curr_level)
 		return ret;
 
-	/* level = -1: disable, level = 0,1,2..n: enable */
+	
 	if (level == -1) {
 		ret = update_cpu_min_freq_all(r->min_level);
 		if (ret)
@@ -1432,7 +1412,7 @@ static int vdd_restriction_apply_voltage(struct rail *r, int level)
 	if (level == r->curr_level)
 		return ret;
 
-	/* level = -1: disable, level = 0,1,2..n: enable */
+	
 	if (level == -1) {
 		ret = regulator_set_voltage(r->reg, r->min_level,
 			r->levels[r->num_levels - 1]);
@@ -1525,7 +1505,7 @@ static ssize_t vdd_rstr_en_store(struct kobject *kobj,
 				dis_cnt++;
 		}
 	}
-	/* As long as one rail is enabled, vdd rstr is enabled */
+	
 	if (val && en_cnt)
 		en->enabled = 1;
 	else if (!val && (dis_cnt == rails_cnt))
@@ -1662,7 +1642,7 @@ static ssize_t vdd_rstr_reg_value_show(
 {
 	int val = 0;
 	struct rail *reg = VDD_RSTR_REG_VALUE_FROM_ATTRIBS(attr);
-	/* -1:disabled, -2:fail to get regualtor handle */
+	
 	if (reg->curr_level < 0)
 		val = reg->curr_level;
 	else
@@ -1740,7 +1720,7 @@ static int request_optimum_current(struct psm_rail *rail, enum ocr_request req)
 		pr_err("Optimum current request failed. err:%d\n", ret);
 		goto request_ocr_exit;
 	}
-	ret = 0; /*regulator_set_optimum_mode returns the mode on success*/
+	ret = 0; 
 	pr_debug("Requested optimum current mode: %d\n", req);
 
 request_ocr_exit:
@@ -1938,7 +1918,7 @@ static int create_sensor_id_map(void)
 
 	for (i = 0; i < max_tsens_num; i++) {
 		ret = tsens_get_hw_id_mapping(i, &tsens_id_map[i]);
-		/* If return -ENXIO, hw_id is default in sequence */
+		
 		if (ret) {
 			if (ret == -ENXIO) {
 				tsens_id_map[i] = i;
@@ -2459,15 +2439,13 @@ static int __ref update_offline_cores(int val)
 				continue;
 			trace_thermal_pre_core_online(cpu);
 			ret = cpu_up(cpu);
-			if (ret && ret == notifier_to_errno(NOTIFY_BAD)) {
+			if (ret && ret == notifier_to_errno(NOTIFY_BAD))
 				pr_debug("Onlining CPU%d is vetoed\n", cpu);
-			} else if (ret) {
-				cpus_offlined |= BIT(cpu);
+			else if (ret)
 				pr_err("Unable to online CPU%d. err:%d\n",
-					cpu, ret);
-			} else {
+						cpu, ret);
+			else
 				pr_debug("Onlined CPU%d\n", cpu);
-			}
 			trace_thermal_post_core_online(cpu,
 				cpumask_test_cpu(cpu, cpu_online_mask));
 		}
@@ -2518,7 +2496,8 @@ static __ref int do_hotplug(void *data)
 				mask |= BIT(cpu);
 			mutex_unlock(&devices->hotplug_dev->clnt_lock);
 		}
-		update_offline_cores(mask);
+		if (mask != cpus_offlined)
+			update_offline_cores(mask);
 		mutex_unlock(&core_control_mutex);
 
 		if (devices && devices->hotplug_dev) {
@@ -2556,7 +2535,7 @@ static __ref int do_hotplug(void *data)
 {
 	return 0;
 }
-/* Call with core_control_mutex locked */
+
 static int __ref update_offline_cores(int val)
 {
 	return 0;
@@ -2900,7 +2879,7 @@ static void do_freq_control(long temp)
 	if (max_freq == cpus[cpu].limited_max_freq)
 		return;
 
-	/* Update new limits */
+	
 	get_online_cpus();
 	for_each_possible_cpu(cpu) {
 		if (!(msm_thermal_info.bootup_freq_control_mask & BIT(cpu)))
@@ -3099,6 +3078,7 @@ static __ref int do_freq_mitigation(void *data)
 			;
 		INIT_COMPLETION(freq_mitigation_complete);
 
+		get_online_cpus();
 		for_each_possible_cpu(cpu) {
 			max_freq_req = (cpus[cpu].max_freq) ?
 					msm_thermal_info.freq_limit :
@@ -3165,6 +3145,7 @@ reset_threshold:
 			}
 		}
 		update_cluster_freq();
+		put_online_cpus();
 	}
 	return ret;
 }
@@ -4423,7 +4404,7 @@ static int devmgr_devices_init(struct platform_device *pdev)
 		goto device_exit;
 	}
 	if (num_possible_cpus() > 1) {
-		/* Add hotplug device */
+		
 		dev_mgr = devm_kzalloc(&pdev->dev,
 		sizeof(struct device_manager_data),
 			GFP_KERNEL);
@@ -4443,7 +4424,7 @@ static int devmgr_devices_init(struct platform_device *pdev)
 		list_add_tail(&dev_mgr->dev_ptr, &devices_list);
 		devices->hotplug_dev = dev_mgr;
 	}
-	/*  Add cpu devices */
+	
 	for_each_possible_cpu(cpu) {
 		dev_mgr = devm_kzalloc(&pdev->dev,
 		sizeof(struct device_manager_data),
@@ -4524,7 +4505,6 @@ int msm_thermal_init(struct msm_thermal_data *pdata)
 		pr_err("cannot register cpufreq notifier. err:%d\n", ret);
 
 	register_reboot_notifier(&msm_thermal_reboot_notifier);
-	pm_notifier(msm_thermal_suspend_callback, 0);
 	INIT_DELAYED_WORK(&check_temp_work, check_temp);
 	schedule_delayed_work(&check_temp_work, 0);
 
@@ -4628,7 +4608,7 @@ static int psm_reg_init(struct platform_device *pdev)
 					psm_rails[i].name);
 			return ret;
 		}
-		/* Apps default vote for PWM mode */
+		
 		psm_rails[i].init = PMIC_PWM_MODE;
 		ret = rpm_regulator_set_mode(psm_rails[i].reg,
 				psm_rails[i].init);

@@ -32,6 +32,11 @@
 #include "q6voice.h"
 #include "audio_ocmem.h"
 
+#undef pr_info
+#undef pr_err
+#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
+#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
+
 #define SHARED_MEM_BUF 2
 #define VOIP_MAX_Q_LEN 10
 #define VOIP_MAX_VOC_PKT_SIZE 4096
@@ -76,23 +81,23 @@ enum format {
 
 
 enum amr_rate_type {
-	AMR_RATE_4750, /* AMR 4.75 kbps */
-	AMR_RATE_5150, /* AMR 5.15 kbps */
-	AMR_RATE_5900, /* AMR 5.90 kbps */
-	AMR_RATE_6700, /* AMR 6.70 kbps */
-	AMR_RATE_7400, /* AMR 7.40 kbps */
-	AMR_RATE_7950, /* AMR 7.95 kbps */
-	AMR_RATE_10200, /* AMR 10.20 kbps */
-	AMR_RATE_12200, /* AMR 12.20 kbps */
-	AMR_RATE_6600, /* AMR-WB 6.60 kbps */
-	AMR_RATE_8850, /* AMR-WB 8.85 kbps */
-	AMR_RATE_12650, /* AMR-WB 12.65 kbps */
-	AMR_RATE_14250, /* AMR-WB 14.25 kbps */
-	AMR_RATE_15850, /* AMR-WB 15.85 kbps */
-	AMR_RATE_18250, /* AMR-WB 18.25 kbps */
-	AMR_RATE_19850, /* AMR-WB 19.85 kbps */
-	AMR_RATE_23050, /* AMR-WB 23.05 kbps */
-	AMR_RATE_23850, /* AMR-WB 23.85 kbps */
+	AMR_RATE_4750, 
+	AMR_RATE_5150, 
+	AMR_RATE_5900, 
+	AMR_RATE_6700, 
+	AMR_RATE_7400, 
+	AMR_RATE_7950, 
+	AMR_RATE_10200, 
+	AMR_RATE_12200, 
+	AMR_RATE_6600, 
+	AMR_RATE_8850, 
+	AMR_RATE_12650, 
+	AMR_RATE_14250, 
+	AMR_RATE_15850, 
+	AMR_RATE_18250, 
+	AMR_RATE_19850, 
+	AMR_RATE_23050, 
+	AMR_RATE_23850, 
 	AMR_RATE_UNDEF
 };
 
@@ -156,13 +161,13 @@ struct voip_drv_info {
 
 	unsigned int pcm_size;
 	unsigned int pcm_count;
-	unsigned int pcm_playback_irq_pos;      /* IRQ position */
-	unsigned int pcm_playback_buf_pos;      /* position in buffer */
+	unsigned int pcm_playback_irq_pos;      
+	unsigned int pcm_playback_buf_pos;      
 
 	unsigned int pcm_capture_size;
 	unsigned int pcm_capture_count;
-	unsigned int pcm_capture_irq_pos;       /* IRQ position */
-	unsigned int pcm_capture_buf_pos;       /* position in buffer */
+	unsigned int pcm_capture_irq_pos;       
+	unsigned int pcm_capture_buf_pos;       
 
 	uint32_t evrc_min_rate;
 	uint32_t evrc_max_rate;
@@ -353,10 +358,10 @@ static void voip_process_ul_pkt(uint8_t *voc_pkt,
 	if (prtd->capture_substream == NULL)
 		return;
 
-	/* Copy up-link packet into out_queue. */
+	
 	spin_lock_irqsave(&prtd->dsp_ul_lock, dsp_flags);
 
-	/* discarding UL packets till start is received */
+	
 	if (!list_empty(&prtd->free_out_queue) && prtd->capture_start) {
 		buf_node = list_first_entry(&prtd->free_out_queue,
 					struct voip_buf_node, list);
@@ -434,7 +439,7 @@ static void voip_process_ul_pkt(uint8_t *voc_pkt,
 				list_add_tail(&buf_node->list,
 					      &prtd->out_queue);
 			} else {
-				/* Drop the second frame */
+				
 				pr_err("%s: UL data dropped, read is slow\n",
 				       __func__);
 			}
@@ -896,8 +901,8 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 					voc_get_session_id(VOIP_SESSION_NAME));
 			voc_register_mvs_cb(NULL, NULL, NULL, prtd);
 		}
-		/* release all buffer */
-		/* release in_queue and free_in_queue */
+		
+		
 		pr_debug("release all buffer\n");
 		p_substream = prtd->playback_substream;
 		if (p_substream == NULL) {
@@ -927,7 +932,7 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 				p_dma_buf->addr);
 			p_dma_buf->area = NULL;
 		}
-		/* release out_queue and free_out_queue */
+		
 capt:		c_substream = prtd->capture_substream;
 		if (c_substream == NULL) {
 			pr_debug("c_substream is NULL\n");
@@ -1121,7 +1126,7 @@ static int msm_pcm_prepare(struct snd_pcm_substream *substream)
 			goto done;
 		}
 
-		/* Initialaizing cb variables */
+		
 		voc_register_mvs_cb(voip_process_ul_pkt,
 				    voip_process_dl_pkt,
 				    voip_ssr_cb_fn, prtd);
@@ -1484,16 +1489,16 @@ static int voip_get_media_type(uint32_t mode, uint32_t rate_type,
 		else
 			*media_type = VSS_MEDIA_ID_PCM_WB;
 		break;
-	case MODE_IS127: /* EVRC-A */
+	case MODE_IS127: 
 		*media_type = VSS_MEDIA_ID_EVRC_MODEM;
 		break;
-	case MODE_4GV_NB: /* EVRC-B */
+	case MODE_4GV_NB: 
 		*media_type = VSS_MEDIA_ID_4GV_NB_MODEM;
 		break;
-	case MODE_4GV_WB: /* EVRC-WB */
+	case MODE_4GV_WB: 
 		*media_type = VSS_MEDIA_ID_4GV_WB_MODEM;
 		break;
-	case MODE_4GV_NW: /* EVRC-NW */
+	case MODE_4GV_NW: 
 		*media_type = VSS_MEDIA_ID_4GV_NW_MODEM;
 		break;
 	case MODE_G711:

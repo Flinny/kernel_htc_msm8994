@@ -720,28 +720,18 @@ static struct rcg_clk mdp_clk_src = {
 };
 
 DEFINE_EXT_CLK(ext_pclk0_clk_src, NULL);
-DEFINE_EXT_CLK(ext_pclk1_clk_src, NULL);
 static struct clk_freq_tbl ftbl_pclk0_clk_src[] = {
 	{
 		.div_src_val = BVAL(10, 8, dsi0phypll_mm_source_val)
 				| BVAL(4, 0, 0),
 		.src_clk = &ext_pclk0_clk_src.c,
-		.freq_hz = 0,
-	},
-	{
-		.div_src_val = BVAL(10, 8, dsi1phypll_mm_source_val)
-				| BVAL(4, 0, 0),
-		.src_clk = &ext_pclk1_clk_src.c,
-		.freq_hz = 0,
 	},
 	F_END
 };
 
 static struct rcg_clk pclk0_clk_src = {
 	.cmd_rcgr_reg = PCLK0_CMD_RCGR,
-	.set_rate = set_rate_mnd,
 	.current_freq = ftbl_pclk0_clk_src,
-	.freq_tbl = ftbl_pclk0_clk_src,
 	.base = &virt_base,
 	.c = {
 		.dbg_name = "pclk0_clk_src",
@@ -754,27 +744,19 @@ static struct rcg_clk pclk0_clk_src = {
 	},
 };
 
+DEFINE_EXT_CLK(ext_pclk1_clk_src, NULL);
 static struct clk_freq_tbl ftbl_pclk1_clk_src[] = {
 	{
 		.div_src_val = BVAL(10, 8, dsi0phypll_mm_source_val)
 				| BVAL(4, 0, 0),
-		.src_clk = &ext_pclk0_clk_src.c,
-		.freq_hz = 0,
-	},
-	{
-		.div_src_val = BVAL(10, 8, dsi1phypll_mm_source_val)
-				| BVAL(4, 0, 0),
 		.src_clk = &ext_pclk1_clk_src.c,
-		.freq_hz = 0,
 	},
 	F_END
 };
 
 static struct rcg_clk pclk1_clk_src = {
 	.cmd_rcgr_reg = PCLK1_CMD_RCGR,
-	.set_rate = set_rate_mnd,
 	.current_freq = ftbl_pclk1_clk_src,
-	.freq_tbl = ftbl_pclk1_clk_src,
 	.base = &virt_base,
 	.c = {
 		.dbg_name = "pclk1_clk_src",
@@ -1118,27 +1100,17 @@ static struct rcg_clk csi1phytimer_clk_src = {
 };
 
 DEFINE_EXT_CLK(ext_byte0_clk_src, NULL);
-DEFINE_EXT_CLK(ext_byte1_clk_src, NULL);
 static struct clk_freq_tbl ftbl_byte0_clk_src[] = {
 	{
 		.div_src_val = BVAL(10, 8, dsi0phypll_mm_source_val),
 		.src_clk = &ext_byte0_clk_src.c,
-		.freq_hz = 0,
-	},
-	{
-		.div_src_val = BVAL(10, 8, dsi1phypll_mm_source_val)
-				| BVAL(4, 0, 0),
-		.src_clk = &ext_byte1_clk_src.c,
-		.freq_hz = 0,
 	},
 	F_END
 };
 
 static struct rcg_clk byte0_clk_src = {
 	.cmd_rcgr_reg = BYTE0_CMD_RCGR,
-	.set_rate = set_rate_hid,
 	.current_freq = ftbl_byte0_clk_src,
-	.freq_tbl = ftbl_byte0_clk_src,
 	.base = &virt_base,
 	.c = {
 		.dbg_name = "byte0_clk_src",
@@ -1151,26 +1123,18 @@ static struct rcg_clk byte0_clk_src = {
 	},
 };
 
+DEFINE_EXT_CLK(ext_byte1_clk_src, NULL);
 static struct clk_freq_tbl ftbl_byte1_clk_src[] = {
 	{
 		.div_src_val = BVAL(10, 8, dsi0phypll_mm_source_val),
-		.src_clk = &ext_byte0_clk_src.c,
-		.freq_hz = 0,
-	},
-	{
-		.div_src_val = BVAL(10, 8, dsi1phypll_mm_source_val)
-				| BVAL(4, 0, 0),
 		.src_clk = &ext_byte1_clk_src.c,
-		.freq_hz = 0,
 	},
 	F_END
 };
 
 static struct rcg_clk byte1_clk_src = {
 	.cmd_rcgr_reg = BYTE1_CMD_RCGR,
-	.set_rate = set_rate_hid,
 	.current_freq = ftbl_byte1_clk_src,
-	.freq_tbl = ftbl_byte1_clk_src,
 	.base = &virt_base,
 	.c = {
 		.dbg_name = "byte1_clk_src",
@@ -2269,7 +2233,7 @@ static int mmss_dbg_set_mux_sel(struct mux_clk *clk, int sel)
 
 	spin_lock_irqsave(&local_clock_reg_lock, flags);
 
-	/* Set debug mux clock index */
+	
 	regval = BVAL(11, 0, sel);
 	writel_relaxed(regval, MMSS_REG_BASE(MMSS_DEBUG_CLK_CTL));
 
@@ -2433,8 +2397,6 @@ static struct clk_lookup msm_clocks_mmss_8994[] = {
 	CLK_LIST(csi2phytimer_clk_src),
 	CLK_LIST(pclk0_clk_src),
 	CLK_LIST(pclk1_clk_src),
-	CLK_LIST(ext_pclk0_clk_src),
-	CLK_LIST(ext_pclk1_clk_src),
 	CLK_LIST(fd_core_clk_src),
 	CLK_LIST(mdp_clk_src),
 	CLK_LIST(ocmemnoc_clk_src),
@@ -2451,8 +2413,6 @@ static struct clk_lookup msm_clocks_mmss_8994[] = {
 	CLK_LIST(csi1phytimer_clk_src),
 	CLK_LIST(byte0_clk_src),
 	CLK_LIST(byte1_clk_src),
-	CLK_LIST(ext_byte0_clk_src),
-	CLK_LIST(ext_byte1_clk_src),
 	CLK_LIST(esc0_clk_src),
 	CLK_LIST(esc1_clk_src),
 	CLK_LIST(extpclk_clk_src),
@@ -2683,7 +2643,7 @@ int msm_mmsscc_8994_probe(struct platform_device *pdev)
 	ext_extpclk_clk_src.dev = &pdev->dev;
 	ext_extpclk_clk_src.clk_id = "extpclk_src";
 
-	/* Perform revision specific fixes */
+	
 	compat = of_get_property(pdev->dev.of_node, "compatible", &compatlen);
 	if (!compat || (compatlen <= 0))
 		return -EINVAL;

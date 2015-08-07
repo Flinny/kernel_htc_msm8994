@@ -37,7 +37,6 @@
 #define CAPTURE_MAX_NUM_PERIODS     8
 #define CAPTURE_MAX_PERIOD_SIZE     4096
 #define CAPTURE_MIN_PERIOD_SIZE     320
-#define LISTEN_MAX_STATUS_PAYLOAD_SIZE 256
 
 #define LAB_BUFFER_ALLOC 1
 #define LAB_BUFFER_DEALLOC 0
@@ -200,7 +199,7 @@ static void lsm_event_handler(uint32_t opcode, uint32_t token,
 			atomic_inc(&prtd->buf_count);
 			snd_pcm_period_elapsed(substream);
 			wake_up(&prtd->period_wait);
-			/* queue the next period buffer */
+			
 			buf_index = (buf_index + 1) %
 			prtd->lsm_client->hw_params.period_count;
 			rc = msm_lsm_queue_lab_buffer(prtd, buf_index);
@@ -600,7 +599,7 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			if (prtd->lsm_client->lab_enable &&
 				!prtd->lsm_client->lab_started) {
 				atomic_set(&prtd->read_abort, 0);
-				/* Push the first period buffer */
+				
 				ret = msm_lsm_queue_lab_buffer(prtd, 0);
 				if (ret) {
 					pr_err("%s: failed to queue buffers for LAB read %d\n"
@@ -800,15 +799,6 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			__func__, "SNDRV_LSM_EVENT_STATUS32");
 			return -EFAULT;
 		}
-
-		if (userarg32.payload_size >
-		    LISTEN_MAX_STATUS_PAYLOAD_SIZE) {
-			pr_err("%s: payload_size %d is invalid, max allowed = %d\n",
-				__func__, userarg32.payload_size,
-				LISTEN_MAX_STATUS_PAYLOAD_SIZE);
-			return -EINVAL;
-		}
-
 		size = sizeof(*user) + userarg32.payload_size;
 		user = kmalloc(size, GFP_KERNEL);
 		if (!user) {
@@ -820,7 +810,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			user->payload_size = userarg32.payload_size;
 			err = msm_lsm_ioctl_shared(substream, cmd, user);
 		}
-		/* Update size with actual payload size */
+		
 		size = sizeof(userarg32) + user->payload_size;
 		if (!err && !access_ok(VERIFY_WRITE, arg, size)) {
 			pr_err("%s: write verify failed size %d\n",
@@ -1023,15 +1013,6 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 			__func__);
 			return -EFAULT;
 		}
-
-		if (userarg.payload_size >
-		    LISTEN_MAX_STATUS_PAYLOAD_SIZE) {
-			pr_err("%s: payload_size %d is invalid, max allowed = %d\n",
-				__func__, userarg.payload_size,
-				LISTEN_MAX_STATUS_PAYLOAD_SIZE);
-			return -EINVAL;
-		}
-
 		size = sizeof(struct snd_lsm_event_status) +
 		userarg.payload_size;
 		user = kmalloc(size, GFP_KERNEL);
@@ -1043,7 +1024,7 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 			user->payload_size = userarg.payload_size;
 			err = msm_lsm_ioctl_shared(substream, cmd, user);
 		}
-		/* Update size with actual payload size */
+		
 		size = sizeof(*user) + user->payload_size;
 		if (!err && !access_ok(VERIFY_WRITE, arg, size)) {
 			pr_err("%s: write verify failed size %d\n",
@@ -1093,7 +1074,7 @@ static int msm_lsm_open(struct snd_pcm_substream *substream)
 	if (ret < 0)
 		pr_info("%s: snd_pcm_hw_constraint_list failed ret %d\n",
 			 __func__, ret);
-	/* Ensure that buffer size is a multiple of period size */
+	
 	ret = snd_pcm_hw_constraint_integer(runtime,
 			    SNDRV_PCM_HW_PARAM_PERIODS);
 	if (ret < 0)

@@ -30,7 +30,7 @@ static struct snd_soc_dai_driver msm_stub_dais[] = {
 	},
 	{
 		.name = "msm-stub-tx",
-		.capture = { /* Support maximum range */
+		.capture = { 
 			.stream_name = "Record",
 			.channels_min = 1,
 			.channels_max = 8,

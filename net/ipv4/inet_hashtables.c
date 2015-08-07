@@ -153,12 +153,7 @@ static inline int compute_score(struct sock *sk, struct net *net,
 	return score;
 }
 
-/*
- * Don't inline this cruft. Here are some nice properties to exploit here. The
- * BSD API does not allow a listening sock to specify the remote port nor the
- * remote address for the connection. So always assume those are both
- * wildcarded during the search since they can never be otherwise.
- */
+
 
 struct sock *__inet_lookup_listener(struct net *net,
 				    struct inet_hashinfo *hashinfo,
@@ -298,7 +293,7 @@ static int __inet_check_established(struct inet_timewait_death_row *death_row,
 
 	spin_lock(lock);
 
-	/* Check TIME-WAIT sockets first. */
+	
 	sk_nulls_for_each(sk2, node, &head->twchain) {
 		if (sk2->sk_hash != hash)
 			continue;
@@ -314,7 +309,7 @@ static int __inet_check_established(struct inet_timewait_death_row *death_row,
 	}
 	tw = NULL;
 
-	/* And established part... */
+	
 	sk_nulls_for_each(sk2, node, &head->chain) {
 		if (sk2->sk_hash != hash)
 			continue;
@@ -341,7 +336,7 @@ unique:
 	if (twp) {
 		*twp = tw;
 	} else if (tw) {
-		/* Silly. Should hash-dance instead... */
+		
 		inet_twsk_deschedule(tw, death_row);
 
 		inet_twsk_put(tw);
@@ -505,7 +500,7 @@ int __inet_hash_connect(struct inet_timewait_death_row *death_row,
 ok:
 		hint += i;
 
-		/* Head lock still held and bh's disabled */
+		
 		inet_bind_hash(sk, tb, port);
 		if (sk_unhashed(sk)) {
 			inet_sk(sk)->inet_sport = htons(port);
@@ -536,7 +531,7 @@ ok:
 		return 0;
 	} else {
 		spin_unlock(&head->lock);
-		/* No definite answer... Walk to established hash table */
+		
 		ret = check_established(death_row, sk, snum, NULL);
 out:
 		local_bh_enable();

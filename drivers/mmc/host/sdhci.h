@@ -165,7 +165,7 @@
 #define   SDHCI_CTRL_UHS_SDR50		0x0002
 #define   SDHCI_CTRL_UHS_SDR104		0x0003
 #define   SDHCI_CTRL_UHS_DDR50		0x0004
-#define   SDHCI_CTRL_HS_SDR200		0x0005 /* reserved value in SDIO spec */
+#define   SDHCI_CTRL_HS_SDR200		0x0005 
 #define  SDHCI_CTRL_VDD_180		0x0008
 #define  SDHCI_CTRL_DRV_TYPE_MASK	0x0030
 #define   SDHCI_CTRL_DRV_TYPE_B		0x0000
@@ -310,7 +310,6 @@ struct sdhci_ops {
 					  bool enable,
 					  u32 type);
 	int	(*enable_controller_clock)(struct sdhci_host *host);
-	void	(*reset_workaround)(struct sdhci_host *host, u32 enable);
 };
 
 #ifdef CONFIG_MMC_SDHCI_IO_ACCESSORS
@@ -395,7 +394,7 @@ static inline u8 sdhci_readb(struct sdhci_host *host, int reg)
 	return readb(host->ioaddr + reg);
 }
 
-#endif /* CONFIG_MMC_SDHCI_IO_ACCESSORS */
+#endif 
 
 extern struct sdhci_host *sdhci_alloc_host(struct device *dev,
 	size_t priv_size);

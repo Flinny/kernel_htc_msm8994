@@ -33,7 +33,6 @@
 #define LISTEN_MAX_NUM_PERIODS     8
 #define LISTEN_MAX_PERIOD_SIZE     4096
 #define LISTEN_MIN_PERIOD_SIZE     320
-#define LISTEN_MAX_STATUS_PAYLOAD_SIZE 256
 
 #define MSM_CPE_LAB_THREAD_TIMEOUT (3 * (HZ/10))
 
@@ -262,7 +261,7 @@ static int msm_cpe_lsm_lab_stop(struct snd_pcm_substream *substream)
 				__func__);
 			rc = kthread_stop(session->lsm_lab_thread);
 
-			/* Wait for the lab thread to exit */
+			
 			rc = wait_for_completion_timeout(
 					&lab_sess->thread_complete,
 					MSM_CPE_LAB_THREAD_TIMEOUT);
@@ -424,7 +423,7 @@ static int msm_cpe_lsm_open(struct snd_pcm_substream *substream)
 		return -EINVAL;
 	}
 
-	/* Ensure that buffer size is a multiple of period size */
+	
 	rc = snd_pcm_hw_constraint_integer(runtime,
 					   SNDRV_PCM_HW_PARAM_PERIODS);
 	if (rc < 0) {
@@ -473,7 +472,7 @@ static int msm_cpe_lsm_open(struct snd_pcm_substream *substream)
 		rc = -EINVAL;
 		goto fail_session_alloc;
 	}
-	/* Explicitly Assign the LAB thread to STOP state */
+	
 	lsm_d->lsm_session->lab.thread_status = MSM_LSM_LAB_THREAD_STOP;
 	lsm_d->lsm_session->started = false;
 
@@ -934,7 +933,7 @@ static int msm_cpe_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 		if ((lab_sess->lab_enable &&
 		     lab_sess->thread_status ==
 		     MSM_LSM_LAB_THREAD_RUNNING)) {
-			/* Explicitly stop LAB */
+			
 			rc = msm_cpe_lsm_lab_stop(substream);
 			if (rc) {
 				dev_err(rtd->dev,
@@ -1149,17 +1148,6 @@ static int msm_cpe_lsm_ioctl(struct snd_pcm_substream *substream,
 			err = -EFAULT;
 			goto done;
 		}
-
-		if (u_event_status.payload_size >
-		    LISTEN_MAX_STATUS_PAYLOAD_SIZE) {
-			dev_err(rtd->dev,
-				"%s: payload_size %d is invalid, max allowed = %d\n",
-				__func__, u_event_status.payload_size,
-				LISTEN_MAX_STATUS_PAYLOAD_SIZE);
-			err = -EINVAL;
-			goto done;
-		}
-
 		u_pld_size = sizeof(struct snd_lsm_event_status) +
 				u_event_status.payload_size;
 
@@ -1348,16 +1336,6 @@ static int msm_cpe_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 				__func__,
 				sizeof(struct snd_lsm_event_status));
 			err = -EFAULT;
-			goto done;
-		}
-
-		if (u_event_status32.payload_size >
-		   LISTEN_MAX_STATUS_PAYLOAD_SIZE) {
-			dev_err(rtd->dev,
-				"%s: payload_size %d is invalid, max allowed = %d\n",
-				__func__, u_event_status32.payload_size,
-				LISTEN_MAX_STATUS_PAYLOAD_SIZE);
-			err = -EINVAL;
 			goto done;
 		}
 
@@ -1723,7 +1701,7 @@ static int msm_asoc_cpe_lsm_probe(struct snd_soc_platform *platform)
 
 	card = platform->card;
 
-	/* Match platform to codec */
+	
 	for (i = 0; i < card->num_links; i++) {
 		rtd = &card->rtd[i];
 		if (!rtd->platform)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -103,11 +103,11 @@ enum sdmx_status {
 };
 
 enum sdmx_filter {
-	SDMX_PES_FILTER,		/* Other PES */
-	SDMX_SEPARATED_PES_FILTER,	/* Separated PES (for decoder) */
-	SDMX_SECTION_FILTER,		/* Section */
-	SDMX_PCR_FILTER,		/* PCR */
-	SDMX_RAW_FILTER,		/* Recording */
+	SDMX_PES_FILTER,		
+	SDMX_SEPARATED_PES_FILTER,	
+	SDMX_SECTION_FILTER,		
+	SDMX_PCR_FILTER,		
+	SDMX_RAW_FILTER,		
 };
 
 enum sdmx_raw_out_format {
@@ -345,4 +345,4 @@ static inline int sdmx_set_log_level(int session_handle,
 
 #endif
 
-#endif /* _MPQ_SDMX_H */
+#endif 

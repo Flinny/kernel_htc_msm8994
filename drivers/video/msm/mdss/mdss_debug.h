@@ -32,8 +32,8 @@
 #define MDSS_REG_BLOCK_NAME_LEN (5)
 
 enum mdss_dbg_reg_dump_flag {
-	MDSS_DBG_DUMP_IN_LOG = BIT(0),
-	MDSS_DBG_DUMP_IN_MEM = BIT(1),
+	MDSS_REG_DUMP_IN_LOG = BIT(0),
+	MDSS_REG_DUMP_IN_MEM = BIT(1),
 };
 
 enum mdss_dbg_xlog_flag {
@@ -43,48 +43,26 @@ enum mdss_dbg_xlog_flag {
 	MDSS_XLOG_ALL = BIT(7)
 };
 
-#define TEST_MASK(id, tp)	((id << 4) | (tp << 1) | BIT(0))
-struct debug_bus {
+#define TEST_MASK(id, tp)	( (id << 4) | (tp << 1) | BIT(0))
+
+struct debug_bus{
 	u32 wr_addr;
 	u32 read_addr;
 	u32 block_id;
 	u32 test_id;
 };
 
+void mdss_dump_debug_bus(void);
+
 #define MDSS_XLOG(...) mdss_xlog(__func__, __LINE__, MDSS_XLOG_DEFAULT, \
 		##__VA_ARGS__, DATA_LIMITER)
 
-/*
- * MDSS_XLOG_TOUT_HANDLER:
- * If xlog is enabled, will dump registers requested and the xlog buffer.
- * This cannot be called from interrupt context.
- */
 #define MDSS_XLOG_TOUT_HANDLER(...)	\
-	mdss_xlog_tout_handler_default(false, false, __func__, ##__VA_ARGS__, \
+	mdss_xlog_tout_handler_default(false, __func__, ##__VA_ARGS__, \
 		XLOG_TOUT_DATA_LIMITER)
 
-/*
- * MDSS_XLOG_TOUT_HANDLER_WQ:
- * If xlog is enabled, will dump the registers requested and the xlog buffer
- * from a work item.
- * This can be called from interrupt context.
- */
 #define MDSS_XLOG_TOUT_HANDLER_WQ(...)	\
-	mdss_xlog_tout_handler_default(false, true, __func__, ##__VA_ARGS__, \
-		XLOG_TOUT_DATA_LIMITER)
-
-/*
- * MDSS_XLOG_TOUT_HANDLER_FATAL_DUMP:
- * Will enforce a dump of the registers requested
- * (and debug bus, if requested by the caller).
- * If xlog is enabled: will dump the registers, bus and xlog buffer.
- * If xlog is disabled: will dump the registers and debug bus.
- * This must be used only in fatal error conditions, since the
- * dump of the registers (and debug bus, if requested) will be
- * forced to happen during the call, even when xlog is disabled.
- */
-#define MDSS_XLOG_TOUT_HANDLER_FATAL_DUMP(...)	\
-	mdss_xlog_tout_handler_default(true, false, __func__, ##__VA_ARGS__, \
+	mdss_xlog_tout_handler_default(true, __func__, ##__VA_ARGS__, \
 		XLOG_TOUT_DATA_LIMITER)
 
 #define MDSS_XLOG_DBG(...) mdss_xlog(__func__, __LINE__, MDSS_XLOG_DBG, \
@@ -108,8 +86,8 @@ struct debug_bus {
 #define MDSS_DEBUG_BASE_MAX 10
 
 struct mdss_debug_base {
-	struct list_head head; /* head of this node */
-	struct list_head dump_list; /* head to the list with dump ranges */
+	struct list_head head; 
+	struct list_head dump_list; 
 	struct mdss_debug_data *mdd;
 	char name[80];
 	void __iomem *base;
@@ -118,7 +96,7 @@ struct mdss_debug_base {
 	size_t max_offset;
 	char *buf;
 	size_t buf_len;
-	u32 *reg_dump; /* address for the mem dump if no ranges used */
+	u32 *reg_dump; 
 };
 
 struct mdss_debug_data {
@@ -133,10 +111,10 @@ struct dump_offset {
 };
 
 struct range_dump_node {
-	struct list_head head; /* head of this node */
-	u32 *reg_dump; /* address for the mem dump */
-	char range_name[40]; /* name of this range */
-	struct dump_offset offset; /* range to dump */
+	struct list_head head; 
+	u32 *reg_dump; 
+	char range_name[40]; 
+	struct dump_offset offset; 
 };
 
 #define DEFINE_MDSS_DEBUGFS_SEQ_FOPS(__prefix)				\
@@ -169,8 +147,7 @@ void mdss_misr_crc_collect(struct mdss_data_type *mdata, int block_id);
 
 int mdss_create_xlog_debug(struct mdss_debug_data *mdd);
 void mdss_xlog(const char *name, int line, int flag, ...);
-void mdss_xlog_tout_handler_default(bool enforce_dump,
-	bool queue, const char *name, ...);
+void mdss_xlog_tout_handler_default(bool queue, const char *name, ...);
 int mdss_xlog_tout_handler_iommu(struct iommu_domain *domain,
 	struct device *dev, unsigned long iova, int flags, void *token);
 #else
@@ -206,8 +183,8 @@ static inline void mdss_xlog_dump(void) { }
 static inline void mdss_xlog(const char *name, int line, int flag, ...) { }
 
 static inline void mdss_dsi_debug_check_te(struct mdss_panel_data *pdata) { }
-static inline void mdss_xlog_tout_handler_default(bool enforce_dump,
-	bool queue, const char *name, ...) { }
+static inline void mdss_xlog_tout_handler_default(bool queue,
+	const char *name, ...) { }
 static inline int  mdss_xlog_tout_handler_iommu(struct iommu_domain *domain,
 	struct device *dev, unsigned long iova, int flags, void *token)
 { return 0; }
@@ -220,4 +197,4 @@ static inline int mdss_debug_register_io(const char *name,
 		dbg_blk);
 }
 
-#endif /* MDSS_DEBUG_H */
+#endif 

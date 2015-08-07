@@ -447,7 +447,7 @@ static void bcl_iavail_work(struct work_struct *work)
 
 	if (gbcl->bcl_mode == BCL_DEVICE_ENABLED) {
 		bcl_calculate_iavail_trigger();
-		/* restart the delay work for caculating imax */
+		
 		schedule_delayed_work(&bcl->bcl_iavail_work,
 			msecs_to_jiffies(bcl->bcl_poll_interval_msec));
 	}
@@ -582,7 +582,7 @@ static int uSec_to_adc_time(struct bcl_context *bcl, int us)
 		i >= 0 && adc_timer_val_usec[i] > us; i--)
 		;
 
-	/* disallow continous mode */
+	
 	if (i <= 0)
 		return -EINVAL;
 
@@ -653,11 +653,6 @@ static void bcl_periph_mode_set(enum bcl_device_mode mode)
 	int ret = 0;
 
 	if (mode == BCL_DEVICE_ENABLED) {
-		/*
-		 * Power supply monitor wont send a callback till the
-		 * power state changes. Make sure we read the current SoC
-		 * and mitigate.
-		 */
 		power_supply_callback(&bcl_psy);
 		ret = power_supply_register(gbcl->dev, &bcl_psy);
 		if (ret < 0) {
@@ -1675,8 +1670,8 @@ static int bcl_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
-	/* For BCL */
-	/* Init default BCL params */
+	
+	
 	if (of_property_read_bool(pdev->dev.of_node, "qcom,bcl-enable"))
 		bcl_mode = BCL_DEVICE_ENABLED;
 	else

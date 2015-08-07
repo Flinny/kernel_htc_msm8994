@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -161,7 +161,7 @@ static irqreturn_t ipa_isr(int irq, void *ctxt)
 {
 	unsigned long flags;
 
-	/* defer interrupt handling in case IPA is not clocked on */
+	
 	if (ipa_active_clients_trylock(&flags) == 0) {
 		IPADBG("defer interrupt processing\n");
 		queue_work(ipa_ctx->power_mgmt_wq, &ipa_interrupt_defer_work);
@@ -248,7 +248,7 @@ int ipa_interrupts_init(u32 ipa_irq, u32 ee, struct device *ipa_dev)
 		return -ENOMEM;
 	}
 
-	/*Clearing interrupts status*/
+	
 	ipa_write_reg(ipa_ctx->mmio, IPA_IRQ_CLR_EE_n_ADDR(ipa_ee), reg);
 
 	res = request_irq(ipa_irq, (irq_handler_t) ipa_isr,

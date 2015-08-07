@@ -86,7 +86,6 @@
 						      <0x2BC 4 8>;
 		qcom,mdss-pipe-dma-clk-ctrl-offsets = <0x2AC 8 12>,
 						      <0x2B4 8 12>;
-		qcom,mdss-pipe-cursor-clk-ctrl-offsets = <0x3A8 16 15>;
 
 		qcom,mdss-smp-data = <34 8192>;
 		qcom,mdss-sspp-len = <0x00002000>;
@@ -289,7 +288,7 @@
 				qcom,supply-max-voltage = <1800000>;
 				qcom,supply-enable-load = <100000>;
 				qcom,supply-disable-load = <100>;
-				qcom,supply-post-on-sleep = <5>;
+				qcom,supply-post-on-sleep = <20>;
 			};
 
 			qcom,ctrl-supply-entry@2 {
@@ -313,7 +312,7 @@
 				qcom,supply-max-voltage = <1800000>;
 				qcom,supply-enable-load = <100000>;
 				qcom,supply-disable-load = <100>;
-				qcom,supply-post-on-sleep = <5>;
+				qcom,supply-post-on-sleep = <20>;
 			};
 		};
 	};
@@ -404,7 +403,7 @@
 				qcom,supply-max-voltage = <1800000>;
 				qcom,supply-enable-load = <100000>;
 				qcom,supply-disable-load = <100>;
-				qcom,supply-post-on-sleep = <5>;
+				qcom,supply-post-on-sleep = <20>;
 			};
 
 			qcom,ctrl-supply-entry@2 {
@@ -428,7 +427,7 @@
 				qcom,supply-max-voltage = <1800000>;
 				qcom,supply-enable-load = <100000>;
 				qcom,supply-disable-load = <100>;
-				qcom,supply-post-on-sleep = <5>;
+				qcom,supply-post-on-sleep = <20>;
 			};
 		};
 	};

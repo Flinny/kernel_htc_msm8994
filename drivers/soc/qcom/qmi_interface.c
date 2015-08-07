@@ -129,14 +129,6 @@ struct msg_desc err_resp_desc = {
 	.ei_array = qmi_error_resp_type_v01_ei,
 };
 
-static DEFINE_MUTEX(qmi_svc_event_notifier_lock);
-static struct msm_ipc_port *qmi_svc_event_notifier_port;
-static struct workqueue_struct *qmi_svc_event_notifier_wq;
-static void qmi_svc_event_notifier_init(void);
-static void qmi_svc_event_worker(struct work_struct *work);
-static struct svc_event_nb *find_svc_event_nb(uint32_t service_id,
-					      uint32_t instance_id);
-DECLARE_WORK(qmi_svc_event_work, qmi_svc_event_worker);
 static void svc_resume_tx_worker(struct work_struct *work);
 static void clean_txn_info(struct qmi_handle *handle);
 static void *qmi_req_resp_log_ctx;
@@ -497,7 +489,7 @@ static int handle_rmv_server(struct qmi_handle *handle,
 	svc_addr = (struct msm_ipc_addr *)(handle->dest_info);
 	if (svc_addr->addr.port_addr.node_id == ctl_msg->srv.node_id &&
 	    svc_addr->addr.port_addr.port_id == ctl_msg->srv.port_id) {
-		/* Wakeup any threads waiting for the response */
+		
 		handle->handle_reset = 1;
 		clean_txn_info(handle);
 
@@ -543,7 +535,7 @@ static void handle_ctl_msg(struct work_struct *work)
 		if (handle->handle_reset)
 			break;
 
-		/* Read the messages */
+		
 		rc = msm_ipc_router_read_msg(
 			(struct msm_ipc_port *)(handle->ctl_port),
 			&src_addr, (unsigned char **)&ctl_msg, &ctl_msg_len);
@@ -591,7 +583,7 @@ struct qmi_handle *qmi_handle_create(
 		goto handle_create_err1;
 	}
 
-	/* Initialize common elements */
+	
 	temp_handle->handle_type = QMI_CLIENT_HANDLE;
 	temp_handle->next_txn_id = 1;
 	mutex_init(&temp_handle->handle_lock);
@@ -602,11 +594,11 @@ struct qmi_handle *qmi_handle_create(
 	INIT_DELAYED_WORK(&temp_handle->resume_tx_work, clnt_resume_tx_worker);
 	INIT_DELAYED_WORK(&temp_handle->ctl_work, handle_ctl_msg);
 
-	/* Initialize client specific elements */
+	
 	INIT_LIST_HEAD(&temp_handle->txn_list);
 	INIT_LIST_HEAD(&temp_handle->pending_txn_list);
 
-	/* Initialize service specific elements */
+	
 	INIT_LIST_HEAD(&temp_handle->conn_list);
 
 	port_ptr = msm_ipc_router_create_port(qmi_event_notify,
@@ -747,7 +739,7 @@ static int qmi_encode_and_send_req(struct qmi_txn **ret_txn_handle,
 		return -ENETRESET;
 	}
 
-	/* Allocate Transaction Info */
+	
 	txn_handle = kzalloc(sizeof(struct qmi_txn), GFP_KERNEL);
 	if (!txn_handle) {
 		pr_err("%s: Failed to allocate txn handle\n", __func__);
@@ -758,7 +750,7 @@ static int qmi_encode_and_send_req(struct qmi_txn **ret_txn_handle,
 	INIT_LIST_HEAD(&txn_handle->list);
 	init_waitqueue_head(&txn_handle->wait_q);
 
-	/* Cache the parameters passed & mark it as sync*/
+	
 	txn_handle->handle = handle;
 	txn_handle->resp_desc = resp_desc;
 	txn_handle->resp = resp;
@@ -769,7 +761,7 @@ static int qmi_encode_and_send_req(struct qmi_txn **ret_txn_handle,
 	txn_handle->enc_data = NULL;
 	txn_handle->enc_data_len = 0;
 
-	/* Encode the request msg */
+	
 	encoded_req_len = req_desc->max_msg_len + QMI_HEADER_SIZE;
 	encoded_req = kmalloc(encoded_req_len, GFP_KERNEL);
 	if (!encoded_req) {
@@ -786,7 +778,7 @@ static int qmi_encode_and_send_req(struct qmi_txn **ret_txn_handle,
 	}
 	encoded_req_len = rc;
 
-	/* Encode the header & Add to the txn_list */
+	
 	if (!handle->next_txn_id)
 		handle->next_txn_id++;
 	txn_handle->txn_id = handle->next_txn_id++;
@@ -803,7 +795,7 @@ static int qmi_encode_and_send_req(struct qmi_txn **ret_txn_handle,
 	list_add_tail(&txn_handle->list, &handle->txn_list);
 	qmi_log(handle, QMI_REQUEST_CONTROL_FLAG, txn_handle->txn_id,
 			req_desc->msg_id, encoded_req_len);
-	/* Send the request */
+	
 	rc = msm_ipc_router_send_msg((struct msm_ipc_port *)(handle->src_port),
 		(struct msm_ipc_addr *)handle->dest_info,
 		encoded_req, encoded_req_len);
@@ -850,7 +842,7 @@ int qmi_send_req_wait(struct qmi_handle *handle,
 	struct qmi_txn *txn_handle = NULL;
 	int rc;
 
-	/* Encode and send the request */
+	
 	rc = qmi_encode_and_send_req(&txn_handle, handle, QMI_SYNC_TXN,
 				     req_desc, req, req_len,
 				     resp_desc, resp, resp_len,
@@ -860,7 +852,7 @@ int qmi_send_req_wait(struct qmi_handle *handle,
 		return rc;
 	}
 
-	/* Wait for the response */
+	
 	if (!timeout_ms) {
 		wait_event(txn_handle->wait_q,
 			   (txn_handle->resp_received ||
@@ -937,7 +929,7 @@ static int qmi_encode_and_send_resp(struct qmi_handle *handle,
 		goto encode_and_send_resp_err0;
 	}
 
-	/* Allocate Transaction Info */
+	
 	txn_handle = kzalloc(sizeof(struct qmi_txn), GFP_KERNEL);
 	if (!txn_handle) {
 		pr_err("%s: Failed to allocate txn handle\n", __func__);
@@ -950,7 +942,7 @@ static int qmi_encode_and_send_resp(struct qmi_handle *handle,
 	txn_handle->enc_data = NULL;
 	txn_handle->enc_data_len = 0;
 
-	/* Encode the response msg */
+	
 	encoded_resp_len = resp_desc->max_msg_len + QMI_HEADER_SIZE;
 	encoded_resp = kmalloc(encoded_resp_len, GFP_KERNEL);
 	if (!encoded_resp) {
@@ -967,7 +959,7 @@ static int qmi_encode_and_send_resp(struct qmi_handle *handle,
 	}
 	encoded_resp_len = rc;
 
-	/* Encode the header & Add to the txn_list */
+	
 	if (req_h) {
 		txn_handle->txn_id = req_h->txn_id;
 		cntl_flag = QMI_RESPONSE_CONTROL_FLAG;
@@ -1147,7 +1139,7 @@ static int send_err_resp(struct qmi_handle *handle,
 	err_resp.result = QMI_RESULT_FAILURE_V01;
 	err_resp.error = translate_err_code(err);
 
-	/* Allocate Transaction Info */
+	
 	txn_handle = kzalloc(sizeof(struct qmi_txn), GFP_KERNEL);
 	if (!txn_handle) {
 		pr_err("%s: Failed to allocate txn handle\n", __func__);
@@ -1159,7 +1151,7 @@ static int send_err_resp(struct qmi_handle *handle,
 	txn_handle->enc_data = NULL;
 	txn_handle->enc_data_len = 0;
 
-	/* Encode the response msg */
+	
 	encoded_resp_len = err_resp_desc.max_msg_len + QMI_HEADER_SIZE;
 	encoded_resp = kmalloc(encoded_resp_len, GFP_KERNEL);
 	if (!encoded_resp) {
@@ -1176,7 +1168,7 @@ static int send_err_resp(struct qmi_handle *handle,
 	}
 	encoded_resp_len = rc;
 
-	/* Encode the header & Add to the txn_list */
+	
 	txn_handle->txn_id = txn_id;
 	encode_qmi_header(encoded_resp, QMI_RESPONSE_CONTROL_FLAG,
 			  txn_handle->txn_id, msg_id,
@@ -1238,7 +1230,7 @@ static int handle_qmi_request(struct qmi_handle *handle,
 	if (conn_h)
 		goto decode_req;
 
-	/* New client, establish a connection */
+	
 	conn_h = add_svc_clnt_conn(handle, src_addr, src_addr_len);
 	if (!conn_h) {
 		pr_err("%s: Error adding a new conn_h\n", __func__);
@@ -1292,7 +1284,7 @@ process_req:
 					      msg_id, req_struct);
 	if (rc < 0) {
 		pr_err("%s: Error while req_cb\n", __func__);
-		/* Check if the error is before or after sending a response */
+		
 		if (verify_req_handle(conn_h, req_h))
 			rmv_req_handle(req_h);
 		else
@@ -1325,7 +1317,7 @@ static int handle_qmi_response(struct qmi_handle *handle,
 	struct qmi_txn *txn_handle;
 	int rc;
 
-	/* Find the transaction handle */
+	
 	txn_handle = find_txn_handle(handle, txn_id);
 	if (!txn_handle) {
 		pr_err("%s Response received for non-existent txn_id %d\n",
@@ -1333,7 +1325,7 @@ static int handle_qmi_response(struct qmi_handle *handle,
 		return 0;
 	}
 
-	/* Decode the message */
+	
 	rc = qmi_kernel_decode(txn_handle->resp_desc, txn_handle->resp,
 			       (void *)(resp_msg + QMI_HEADER_SIZE), msg_len);
 	if (rc < 0) {
@@ -1347,7 +1339,7 @@ static int handle_qmi_response(struct qmi_handle *handle,
 		return rc;
 	}
 
-	/* Handle async or sync resp */
+	
 	switch (txn_handle->type) {
 	case QMI_SYNC_TXN:
 		txn_handle->resp_received = 1;
@@ -1376,7 +1368,7 @@ static int handle_qmi_indication(struct qmi_handle *handle, void *msg,
 				 unsigned int msg_id, unsigned int msg_len)
 {
 	if (handle->ind_cb)
-		handle->ind_cb(handle, msg_id, msg + QMI_HEADER_SIZE,
+		handle->ind_cb(handle, msg_id, msg,
 				msg_len, handle->ind_cb_priv);
 	return 0;
 }
@@ -1399,7 +1391,7 @@ int qmi_recv_msg(struct qmi_handle *handle)
 		return -ENETRESET;
 	}
 
-	/* Read the messages */
+	
 	rc = msm_ipc_router_read_msg((struct msm_ipc_port *)(handle->src_port),
 				     &src_addr, &recv_msg, &recv_msg_len);
 	if (rc == -ENOMSG) {
@@ -1413,7 +1405,7 @@ int qmi_recv_msg(struct qmi_handle *handle)
 		return rc;
 	}
 
-	/* Decode the header & Handle the req, resp, indication message */
+	
 	decode_qmi_header(recv_msg, &cntl_flag, &txn_id, &msg_id, &msg_len);
 
 	qmi_log(handle, cntl_flag, txn_id, msg_id, msg_len);
@@ -1492,67 +1484,55 @@ int qmi_connect_to_service(struct qmi_handle *handle,
 }
 EXPORT_SYMBOL(qmi_connect_to_service);
 
-static int qmi_notify_svc_event_arrive(uint32_t service,
-					uint32_t instance)
+static struct svc_event_nb *find_svc_event_nb_by_name(const char *name)
+{
+	struct svc_event_nb *temp;
+
+	list_for_each_entry(temp, &svc_event_nb_list, list) {
+		if (!strncmp(name, temp->pdriver_name,
+			     sizeof(temp->pdriver_name)))
+			return temp;
+	}
+	return NULL;
+}
+
+static int qmi_svc_event_probe(struct platform_device *pdev)
 {
 	struct svc_event_nb *temp;
 	unsigned long flags;
-	struct msm_ipc_port_name svc_name;
-	struct msm_ipc_server_info svc_info;
-	int ret;
 
 	mutex_lock(&svc_event_nb_list_lock);
-	temp = find_svc_event_nb(service, instance);
+	temp = find_svc_event_nb_by_name(pdev->name);
 	if (!temp) {
 		mutex_unlock(&svc_event_nb_list_lock);
 		return -EINVAL;
 	}
-	svc_name.service = service;
-	svc_name.instance = instance;
-	ret = msm_ipc_router_lookup_server_name(&svc_name, &svc_info,
-						1, LOOKUP_MASK);
+
 	spin_lock_irqsave(&temp->nb_lock, flags);
-	if (temp->svc_avail < ret) {
-		/*
-		 * Notify only if the clients are not notified about the
-		 * service during registration.
-		 */
-		temp->svc_avail = ret;
-		raw_notifier_call_chain(&temp->svc_event_rcvr_list,
+	temp->svc_avail++;
+	raw_notifier_call_chain(&temp->svc_event_rcvr_list,
 				QMI_SERVER_ARRIVE, NULL);
-	}
 	spin_unlock_irqrestore(&temp->nb_lock, flags);
 	mutex_unlock(&svc_event_nb_list_lock);
 	return 0;
 }
 
-static int qmi_notify_svc_event_exit(uint32_t service,
-				uint32_t instance)
+static int qmi_svc_event_remove(struct platform_device *pdev)
 {
 	struct svc_event_nb *temp;
 	unsigned long flags;
-	struct msm_ipc_port_name svc_name;
-	struct msm_ipc_server_info svc_info;
-	int ret;
 
 	mutex_lock(&svc_event_nb_list_lock);
-	temp = find_svc_event_nb(service, instance);
+	temp = find_svc_event_nb_by_name(pdev->name);
 	if (!temp) {
 		mutex_unlock(&svc_event_nb_list_lock);
 		return -EINVAL;
 	}
 
-	svc_name.service = service;
-	svc_name.instance = instance;
-	ret = msm_ipc_router_lookup_server_name(&svc_name, &svc_info,
-						1, LOOKUP_MASK);
 	spin_lock_irqsave(&temp->nb_lock, flags);
-	if (temp->svc_avail > ret) {
-		/* Notify only if an already notified service has gone down */
-		temp->svc_avail = ret;
-		raw_notifier_call_chain(&temp->svc_event_rcvr_list,
+	temp->svc_avail--;
+	raw_notifier_call_chain(&temp->svc_event_rcvr_list,
 				QMI_SERVER_EXIT, NULL);
-	}
 	spin_unlock_irqrestore(&temp->nb_lock, flags);
 	mutex_unlock(&svc_event_nb_list_lock);
 	return 0;
@@ -1571,26 +1551,22 @@ static struct svc_event_nb *find_svc_event_nb(uint32_t service_id,
 	return NULL;
 }
 
-/**
- * find_and_add_svc_event_nb() - Find/Add a notifier block for specific service
- * @service_id:	Service Id of the service
- * @instance_id:Instance Id of the service
- *
- * Return:	Pointer to svc_event_nb structure for the specified service
- *
- * This function should only be called after acquiring svc_event_nb_list_lock.
- */
 static struct svc_event_nb *find_and_add_svc_event_nb(uint32_t service_id,
 						      uint32_t instance_id)
 {
 	struct svc_event_nb *temp;
+	int ret;
 
+	mutex_lock(&svc_event_nb_list_lock);
 	temp = find_svc_event_nb(service_id, instance_id);
-	if (temp)
+	if (temp) {
+		mutex_unlock(&svc_event_nb_list_lock);
 		return temp;
+	}
 
 	temp = kzalloc(sizeof(struct svc_event_nb), GFP_KERNEL);
 	if (!temp) {
+		mutex_unlock(&svc_event_nb_list_lock);
 		pr_err("%s: Failed to alloc notifier block\n", __func__);
 		return temp;
 	}
@@ -1599,9 +1575,25 @@ static struct svc_event_nb *find_and_add_svc_event_nb(uint32_t service_id,
 	temp->service_id = service_id;
 	temp->instance_id = instance_id;
 	INIT_LIST_HEAD(&temp->list);
+	temp->svc_driver.probe = qmi_svc_event_probe;
+	temp->svc_driver.remove = qmi_svc_event_remove;
+	scnprintf(temp->pdriver_name, sizeof(temp->pdriver_name),
+		  "SVC%08x:%08x", service_id, instance_id);
+	temp->svc_driver.driver.name = temp->pdriver_name;
 	RAW_INIT_NOTIFIER_HEAD(&temp->svc_event_rcvr_list);
 
 	list_add_tail(&temp->list, &svc_event_nb_list);
+	mutex_unlock(&svc_event_nb_list_lock);
+
+	ret = platform_driver_register(&temp->svc_driver);
+	if (ret < 0) {
+		pr_err("%s: Failed pdriver register\n", __func__);
+		mutex_lock(&svc_event_nb_list_lock);
+		list_del(&temp->list);
+		mutex_unlock(&svc_event_nb_list_lock);
+		kfree(temp);
+		temp = NULL;
+	}
 
 	return temp;
 }
@@ -1613,46 +1605,25 @@ int qmi_svc_event_notifier_register(uint32_t service_id,
 {
 	struct svc_event_nb *temp;
 	unsigned long flags;
-	int ret, num_servers;
+	int ret;
 	uint32_t instance_id;
-	struct msm_ipc_port_name svc_name;
-	struct msm_ipc_server_info svc_info;
-
-	mutex_lock(&qmi_svc_event_notifier_lock);
-	if (!qmi_svc_event_notifier_port && !qmi_svc_event_notifier_wq)
-		qmi_svc_event_notifier_init();
-	mutex_unlock(&qmi_svc_event_notifier_lock);
 
 	instance_id = BUILD_INSTANCE_ID(service_vers, service_ins);
-	mutex_lock(&svc_event_nb_list_lock);
 	temp = find_and_add_svc_event_nb(service_id, instance_id);
+	if (!temp)
+		return -EFAULT;
+
+	mutex_lock(&svc_event_nb_list_lock);
+	temp = find_svc_event_nb(service_id, instance_id);
 	if (!temp) {
 		mutex_unlock(&svc_event_nb_list_lock);
 		return -EFAULT;
 	}
-	svc_name.service = service_id;
-	svc_name.instance = instance_id;
-	num_servers = msm_ipc_router_lookup_server_name(&svc_name, &svc_info,
-						1, LOOKUP_MASK);
 	spin_lock_irqsave(&temp->nb_lock, flags);
-	ret = raw_notifier_chain_register(&temp->svc_event_rcvr_list, nb);
-	if (num_servers != 0 && temp->svc_avail >= num_servers) {
-		/*
-		 * Either all of the existing clients have already been notified
-		 * or some service has just gone down but there are still some
-		 * services available. Notify the client now.
-		 */
-		temp->svc_avail = num_servers;
+	if (temp->svc_avail)
 		nb->notifier_call(nb, QMI_SERVER_ARRIVE, NULL);
-	} else if (num_servers != 0 && temp->svc_avail < num_servers) {
-		/*
-		 * A new server just came up. Notify all the clients including
-		 * the one that has called notifier register.
-		 */
-		temp->svc_avail = num_servers;
-		raw_notifier_call_chain(&temp->svc_event_rcvr_list,
-				QMI_SERVER_ARRIVE, NULL);
-	}
+
+	ret = raw_notifier_chain_register(&temp->svc_event_rcvr_list, nb);
 	spin_unlock_irqrestore(&temp->nb_lock, flags);
 	mutex_unlock(&svc_event_nb_list_lock);
 
@@ -1687,90 +1658,6 @@ int qmi_svc_event_notifier_unregister(uint32_t service_id,
 }
 EXPORT_SYMBOL(qmi_svc_event_notifier_unregister);
 
-/**
- * qmi_svc_event_worker() - Read control messages over service event port
- * @work:	Reference to the work structure queued.
- *
- */
-static void qmi_svc_event_worker(struct work_struct *work)
-{
-	union rr_control_msg *ctl_msg = NULL;
-	unsigned int ctl_msg_len;
-	struct msm_ipc_addr src_addr;
-	int ret;
-
-	while (1) {
-		ret = msm_ipc_router_read_msg(qmi_svc_event_notifier_port,
-			&src_addr, (unsigned char **)&ctl_msg, &ctl_msg_len);
-		if (ret == -ENOMSG)
-			break;
-		if (ret < 0) {
-			pr_err("%s:Error receiving control message\n",
-					__func__);
-			break;
-		}
-		if (ctl_msg->cmd == IPC_ROUTER_CTRL_CMD_NEW_SERVER)
-			qmi_notify_svc_event_arrive(ctl_msg->srv.service,
-							ctl_msg->srv.instance);
-		else if (ctl_msg->cmd == IPC_ROUTER_CTRL_CMD_REMOVE_SERVER)
-			qmi_notify_svc_event_exit(ctl_msg->srv.service,
-							ctl_msg->srv.instance);
-		kfree(ctl_msg);
-	}
-}
-
-/**
- * qmi_svc_event_notify() - Callback for any service event posted on the control port
- * @event:	The event posted on the control port.
- * @data:	Any out-of-band data associated with event.
- * @odata_len:	Length of the out-of-band data, if any.
- * @priv:	Private Data.
- *
- * This function is called by the underlying transport to notify the QMI
- * interface regarding any incoming service related events. It is registered
- * during service event control port creation.
- */
-static void qmi_svc_event_notify(unsigned event, void *data,
-				size_t odata_len, void *priv)
-{
-	if (event == IPC_ROUTER_CTRL_CMD_NEW_SERVER
-		|| event == IPC_ROUTER_CTRL_CMD_REMOVE_CLIENT
-		|| event == IPC_ROUTER_CTRL_CMD_REMOVE_SERVER)
-		queue_work(qmi_svc_event_notifier_wq, &qmi_svc_event_work);
-}
-
-/**
- * qmi_svc_event_notifier_init() - Create a control port to get service events
- *
- * This function is called during first service notifier registration. It
- * creates a control port to get notification about server events so that
- * respective clients can be notified about the events.
- */
-static void qmi_svc_event_notifier_init(void)
-{
-	qmi_svc_event_notifier_wq = create_singlethread_workqueue(
-					"qmi_svc_event_wq");
-	if (!qmi_svc_event_notifier_wq) {
-		pr_err("%s: ctrl workqueue allocation failed\n", __func__);
-		return;
-	}
-	qmi_svc_event_notifier_port = msm_ipc_router_create_port(
-				qmi_svc_event_notify, NULL);
-	if (!qmi_svc_event_notifier_port) {
-		destroy_workqueue(qmi_svc_event_notifier_wq);
-		pr_err("%s: IPC Router Port creation failed\n", __func__);
-		return;
-	}
-	msm_ipc_router_bind_control_port(qmi_svc_event_notifier_port);
-
-	return;
-}
-
-/**
- * qmi_log_init() - Init function for IPC Logging
- *
- * Initialize log contexts for QMI request/response/indications.
- */
 void qmi_log_init(void)
 {
 	qmi_req_resp_log_ctx =
@@ -1797,14 +1684,14 @@ int qmi_svc_register(struct qmi_handle *handle, void *ops_options)
 	if (!handle || !svc_ops_options)
 		return -EINVAL;
 
-	/* Check if the required elements of opts_options are filled */
+	
 	if (!svc_ops_options->service_id || !svc_ops_options->service_vers ||
 	    !svc_ops_options->connect_cb || !svc_ops_options->disconnect_cb ||
 	    !svc_ops_options->req_desc_cb || !svc_ops_options->req_cb)
 		return -EINVAL;
 
 	mutex_lock(&handle->handle_lock);
-	/* Check if another service/client is registered in that handle */
+	
 	if (handle->handle_type == QMI_SERVICE_HANDLE || handle->dest_info) {
 		mutex_unlock(&handle->handle_lock);
 		return -EBUSY;
@@ -1834,12 +1721,7 @@ int qmi_svc_register(struct qmi_handle *handle, void *ops_options)
 }
 EXPORT_SYMBOL(qmi_svc_register);
 
-/**
- * qmi_svc_unregister() - Unregister the service from a QMI handle
- * @handle: QMI handle from which the service has to be unregistered.
- *
- * return: 0 on success, < 0 on error.
- */
+
 int qmi_svc_unregister(struct qmi_handle *handle)
 {
 	struct qmi_svc_clnt_conn *conn_h, *temp_conn_h;

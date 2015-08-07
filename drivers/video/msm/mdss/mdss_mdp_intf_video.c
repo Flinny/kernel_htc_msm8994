@@ -43,8 +43,6 @@ struct intf_timing_params {
 	u32 v_front_porch;
 	u32 hsync_pulse_width;
 	u32 vsync_pulse_width;
-	u32 h_polarity;
-	u32 v_polarity;
 
 	u32 border_clr;
 	u32 underflow_clr;
@@ -62,10 +60,6 @@ struct mdss_mdp_video_ctx {
 	u32 poll_cnt;
 	struct completion vsync_comp;
 	int wait_pending;
-
-	u32 default_fps;
-	u32 saved_vtotal;
-	u32 saved_vfporch;
 
 	atomic_t vsync_ref;
 	spinlock_t vsync_lock;
@@ -196,7 +190,7 @@ static void mdss_mdp_video_intf_recovery(void *data, int event)
 		} else {
 			pr_warn("line count is less. line_cnt = %d\n",
 								line_cnt);
-			/* Add delay so that line count is in active region */
+			
 			udelay(delay);
 		}
 	}
@@ -229,7 +223,7 @@ static int mdss_mdp_video_timegen_setup(struct mdss_mdp_ctl *ctl,
 		display_v_end -= p->h_front_porch;
 	}
 
-	/* TIMING_2 flush bit on 8939 is BIT 31 */
+	
 	if (mdata->mdp_rev == MDSS_MDP_HW_REV_108 &&
 				ctx->intf_num == MDSS_MDP_INTF2)
 		ctl->flush_bits |= BIT(31);
@@ -259,23 +253,28 @@ static int mdss_mdp_video_timegen_setup(struct mdss_mdp_ctl *ctl,
 
 	if (active_h_end) {
 		active_hctl = (active_h_end << 16) | active_h_start;
-		active_hctl |= BIT(31);	/* ACTIVE_H_ENABLE */
+		active_hctl |= BIT(31);	
 	} else {
 		active_hctl = 0;
 	}
 
 	if (active_v_end)
-		active_v_start |= BIT(31); /* ACTIVE_V_ENABLE */
+		active_v_start |= BIT(31); 
 
 	hsync_ctl = (hsync_period << 16) | p->hsync_pulse_width;
 	display_hctl = (hsync_end_x << 16) | hsync_start_x;
 
 	den_polarity = 0;
-	hsync_polarity = p->h_polarity;
-	vsync_polarity = p->v_polarity;
-	polarity_ctl = (den_polarity << 2)   | /*  DEN Polarity  */
-		       (vsync_polarity << 1) | /* VSYNC Polarity */
-		       (hsync_polarity << 0);  /* HSYNC Polarity */
+	if (MDSS_INTF_HDMI == ctx->intf_type) {
+		hsync_polarity = p->yres >= 720 ? 0 : 1;
+		vsync_polarity = p->yres >= 720 ? 0 : 1;
+	} else {
+		hsync_polarity = 0;
+		vsync_polarity = 0;
+	}
+	polarity_ctl = (den_polarity << 2)   | 
+		       (vsync_polarity << 1) | 
+		       (hsync_polarity << 0);  
 
 	mdp_video_write(ctx, MDSS_MDP_REG_INTF_HSYNC_CTL, hsync_ctl);
 	mdp_video_write(ctx, MDSS_MDP_REG_INTF_VSYNC_PERIOD_F0,
@@ -393,7 +392,7 @@ void mdss_mdp_turn_off_time_engine(struct mdss_mdp_ctl *ctl,
 	struct mdss_mdp_ctl *sctl;
 
 	mdp_video_write(ctx, MDSS_MDP_REG_INTF_TIMING_ENGINE_EN, 0);
-	/* wait for at least one VSYNC for proper TG OFF */
+	
 	msleep(sleep_time);
 
 	mdss_iommu_ctrl(0);
@@ -743,6 +742,7 @@ static int mdss_mdp_video_hfp_fps_update(struct mdss_mdp_video_ctx *ctx,
 static int mdss_mdp_video_vfp_fps_update(struct mdss_mdp_video_ctx *ctx,
 				 struct mdss_panel_data *pdata, int new_fps)
 {
+	int curr_fps;
 	int add_v_lines = 0;
 	u32 current_vsync_period_f0, new_vsync_period_f0;
 	int vsync_period, hsync_period;
@@ -750,17 +750,11 @@ static int mdss_mdp_video_vfp_fps_update(struct mdss_mdp_video_ctx *ctx,
 
 	vsync_period = mdss_panel_get_vtotal(&pdata->panel_info);
 	hsync_period = mdss_panel_get_htotal(&pdata->panel_info, true);
+	curr_fps = mdss_panel_get_framerate(&pdata->panel_info);
 
-	if (!ctx->default_fps) {
-		ctx->default_fps = mdss_panel_get_framerate(&pdata->panel_info);
-		ctx->saved_vtotal = vsync_period;
-		ctx->saved_vfporch = pdata->panel_info.lcdc.v_front_porch;
-	}
-
-	diff = ctx->default_fps - new_fps;
-	add_v_lines = mult_frac(ctx->saved_vtotal, diff, new_fps);
-	pdata->panel_info.lcdc.v_front_porch = ctx->saved_vfporch +
-			add_v_lines;
+	diff = curr_fps - new_fps;
+	add_v_lines = mult_frac(vsync_period, diff, new_fps);
+	pdata->panel_info.lcdc.v_front_porch += add_v_lines;
 
 	vsync_period = mdss_panel_get_vtotal(&pdata->panel_info);
 	current_vsync_period_f0 = mdp_video_read(ctx,
@@ -849,7 +843,7 @@ static void mdss_mdp_video_timegen_flush(struct mdss_mdp_ctl *ctl,
 	mdata = ctl->mdata;
 	ctl_flush = (BIT(31) >> (ctl->intf_num - MDSS_MDP_INTF0));
 	if (sctx) {
-		/* For 8939, sctx is always INTF2 and the flush bit is BIT 31 */
+		
 		if (mdata->mdp_rev == MDSS_MDP_HW_REV_108)
 			ctl_flush |= BIT(31);
 		else
@@ -906,26 +900,12 @@ static int mdss_mdp_video_config_fps(struct mdss_mdp_ctl *ctl,
 
 	if (pdata->panel_info.dfps_update
 			!= DFPS_SUSPEND_RESUME_MODE) {
-		if (!ctx->timegen_en) {
-			pr_err("TG is OFF. DFPS mode invalid\n");
-			return -EINVAL;
-		}
-
-		/*
-		 * there is possibility that the time of mdp flush
-		 * bit set and the time of dsi flush bit are cross
-		 * vsync boundary. therefore wait4vsync is needed
-		 * to guarantee both flush bits are set within same
-		 * vsync period regardless of mdp revision.
-		 */
-		rc = mdss_mdp_video_dfps_wait4vsync(ctl);
-		if (rc < 0) {
-			pr_err("Error during wait4vsync\n");
-			return rc;
-		}
-
 		if (pdata->panel_info.dfps_update
 				== DFPS_IMMEDIATE_CLK_UPDATE_MODE) {
+			if (!ctx->timegen_en) {
+				pr_err("TG is OFF. DFPS mode invalid\n");
+				return -EINVAL;
+			}
 			rc = mdss_mdp_ctl_intf_event(ctl,
 					MDSS_EVENT_PANEL_UPDATE_FPS,
 					(void *) (unsigned long) new_fps);
@@ -936,6 +916,16 @@ static int mdss_mdp_video_config_fps(struct mdss_mdp_ctl *ctl,
 				pdata->panel_info.dfps_update
 				== DFPS_IMMEDIATE_PORCH_UPDATE_MODE_HFP) {
 			unsigned long flags;
+			if (!ctx->timegen_en) {
+				pr_err("TG is OFF. DFPS mode invalid\n");
+				return -EINVAL;
+			}
+
+			rc = mdss_mdp_video_dfps_wait4vsync(ctl);
+			if (rc < 0) {
+				pr_err("Error during wait4vsync\n");
+				return rc;
+			}
 
 			mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_ON);
 			spin_lock_irqsave(&ctx->dfps_lock, flags);
@@ -1100,7 +1090,7 @@ int mdss_mdp_video_reconfigure_splash_done(struct mdss_mdp_ctl *ctl,
 			return ret;
 		}
 
-		/* clear up mixer0 and mixer1 */
+		
 		flush = 0;
 		for (i = 0; i < 2; i++) {
 			data = mdss_mdp_ctl_read(ctl,
@@ -1115,7 +1105,7 @@ int mdss_mdp_video_reconfigure_splash_done(struct mdss_mdp_ctl *ctl,
 		mdss_mdp_ctl_write(ctl, MDSS_MDP_REG_CTL_FLUSH, flush);
 
 		mdp_video_write(ctx, MDSS_MDP_REG_INTF_TIMING_ENGINE_EN, 0);
-		/* wait for 1 VSYNC for the pipe to be unstaged */
+		
 		msleep(20);
 
 		ret = mdss_mdp_ctl_intf_event(ctl,
@@ -1235,7 +1225,7 @@ static int mdss_mdp_video_ctx_setup(struct mdss_mdp_ctl *ctl,
 	itp.underflow_clr = pinfo->lcdc.underflow_clr;
 	itp.hsync_skew = pinfo->lcdc.hsync_skew;
 
-	/* tg active area is not work, hence yres should equal to height */
+	
 	itp.xres = mult_frac((pinfo->xres + pinfo->lcdc.border_left +
 			pinfo->lcdc.border_right), dst_bpp, pinfo->bpp);
 
@@ -1248,8 +1238,6 @@ static int mdss_mdp_video_ctx_setup(struct mdss_mdp_ctl *ctl,
 	itp.v_front_porch = pinfo->lcdc.v_front_porch;
 	itp.hsync_pulse_width = pinfo->lcdc.h_pulse_width;
 	itp.vsync_pulse_width = pinfo->lcdc.v_pulse_width;
-	itp.h_polarity = pinfo->lcdc.h_polarity;
-	itp.v_polarity = pinfo->lcdc.v_polarity;
 
 	if (!ctl->panel_data->panel_info.cont_splash_enabled) {
 		if (mdss_mdp_video_timegen_setup(ctl, &itp, ctx)) {
@@ -1358,7 +1346,7 @@ void mdss_mdp_switch_to_cmd_mode(struct mdss_mdp_ctl *ctl, int prep)
 		return;
 	}
 
-	/* Start off by sending command to initial cmd mode */
+	
 	rc = mdss_mdp_ctl_intf_event(ctl,
 		MDSS_EVENT_DSI_DYNAMIC_SWITCH, (void *) mode);
 	if (rc) {
@@ -1368,7 +1356,7 @@ void mdss_mdp_switch_to_cmd_mode(struct mdss_mdp_ctl *ctl, int prep)
 	}
 
 	if (ctx->wait_pending) {
-		/* wait for at least commit to commplete */
+		
 		wait_for_completion_interruptible_timeout(&ctx->vsync_comp,
 			  usecs_to_jiffies(VSYNC_TIMEOUT_US));
 	}

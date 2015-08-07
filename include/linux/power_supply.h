@@ -19,12 +19,7 @@
 
 struct device;
 
-/*
- * This is recommended structure to specify static power supply parameters.
- * Generic one, parametrizable for different power supplies. Power supply
- * class itself does not use it, but that's what implementing most platform
- * drivers, should try reuse for consistency.
- */
+
 
 enum {
 	POWER_SUPPLY_STATUS_UNKNOWN = 0,
@@ -82,7 +77,7 @@ enum {
 };
 
 enum power_supply_property {
-	/* Properties of type `int' */
+	
 	POWER_SUPPLY_PROP_STATUS = 0,
 	POWER_SUPPLY_PROP_CHARGE_TYPE,
 	POWER_SUPPLY_PROP_HEALTH,
@@ -134,9 +129,9 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_ENERGY_AVG,
 	POWER_SUPPLY_PROP_HI_POWER,
 	POWER_SUPPLY_PROP_LOW_POWER,
-	POWER_SUPPLY_PROP_CAPACITY, /* in percents! */
-	POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN, /* in percents! */
-	POWER_SUPPLY_PROP_CAPACITY_ALERT_MAX, /* in percents! */
+	POWER_SUPPLY_PROP_CAPACITY, 
+	POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN, 
+	POWER_SUPPLY_PROP_CAPACITY_ALERT_MAX, 
 	POWER_SUPPLY_PROP_CAPACITY_LEVEL,
 	POWER_SUPPLY_PROP_CAPACITY_RAW,
 	POWER_SUPPLY_PROP_TEMP,
@@ -151,15 +146,15 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_TIME_TO_EMPTY_AVG,
 	POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
 	POWER_SUPPLY_PROP_TIME_TO_FULL_AVG,
-	POWER_SUPPLY_PROP_TYPE, /* use power_supply.type instead */
+	POWER_SUPPLY_PROP_TYPE, 
 	POWER_SUPPLY_PROP_SCOPE,
 	POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL,
 	POWER_SUPPLY_PROP_RESISTANCE,
 	POWER_SUPPLY_PROP_RESISTANCE_CAPACITIVE,
-	/* unit is in ohms due to ID being typically in kohm range */
+	
 	POWER_SUPPLY_PROP_RESISTANCE_ID,
 	POWER_SUPPLY_PROP_RESISTANCE_NOW,
-	/* Local extensions */
+	
 	POWER_SUPPLY_PROP_USB_HC,
 	POWER_SUPPLY_PROP_USB_OTG,
 	POWER_SUPPLY_PROP_CHARGE_ENABLED,
@@ -170,8 +165,7 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_SAFETY_TIMER_ENABLE,
 	POWER_SUPPLY_PROP_CHARGE_DONE,
 	POWER_SUPPLY_PROP_FLASH_ACTIVE,
-	POWER_SUPPLY_PROP_ALLOW_DETECTION,
-	/* Local extensions of type int64_t */
+	
 	POWER_SUPPLY_PROP_CHARGE_COUNTER_EXT,
 	
 	POWER_SUPPLY_PROP_MODEL_NAME,
@@ -187,15 +181,15 @@ enum power_supply_type {
 	POWER_SUPPLY_TYPE_BATTERY,
 	POWER_SUPPLY_TYPE_UPS,
 	POWER_SUPPLY_TYPE_MAINS,
-	POWER_SUPPLY_TYPE_USB,		/* Standard Downstream Port */
-	POWER_SUPPLY_TYPE_USB_DCP,	/* Dedicated Charging Port */
-	POWER_SUPPLY_TYPE_USB_CDP,	/* Charging Downstream Port */
-	POWER_SUPPLY_TYPE_USB_ACA,	/* Accessory Charger Adapters */
-	POWER_SUPPLY_TYPE_USB_HVDCP,	/* High Voltage DCP */
-	POWER_SUPPLY_TYPE_WIRELESS,	/* Accessory Charger Adapters */
-	POWER_SUPPLY_TYPE_BMS,		/* Battery Monitor System */
-	POWER_SUPPLY_TYPE_USB_PARALLEL,		/* USB Parallel Path */
-	POWER_SUPPLY_TYPE_WIPOWER,		/* Wipower */
+	POWER_SUPPLY_TYPE_USB,		
+	POWER_SUPPLY_TYPE_USB_DCP,	
+	POWER_SUPPLY_TYPE_USB_CDP,	
+	POWER_SUPPLY_TYPE_USB_ACA,	
+	POWER_SUPPLY_TYPE_USB_HVDCP,	
+	POWER_SUPPLY_TYPE_WIRELESS,	
+	POWER_SUPPLY_TYPE_BMS,		
+	POWER_SUPPLY_TYPE_USB_PARALLEL,		
+	POWER_SUPPLY_TYPE_WIPOWER,		
 };
 
 union power_supply_propval {
@@ -230,10 +224,10 @@ struct power_supply {
 	void (*external_power_changed)(struct power_supply *psy);
 	void (*set_charged)(struct power_supply *psy);
 
-	/* For APM emulation, think legacy userspace. */
+	
 	int use_for_apm;
 
-	/* private */
+	
 	struct device *dev;
 	struct work_struct changed_work;
 	spinlock_t changed_lock;
@@ -288,8 +282,6 @@ extern int power_supply_set_supply_type(struct power_supply *psy,
 extern int power_supply_set_hi_power_state(struct power_supply *psy, int value);
 extern int power_supply_set_low_power_state(struct power_supply *psy,
 							int value);
-extern int power_supply_set_allow_detection(struct power_supply *psy,
-							int value);
 extern int power_supply_is_system_supplied(void);
 extern int power_supply_register(struct device *parent,
 				 struct power_supply *psy);
@@ -333,9 +325,6 @@ static inline int power_supply_set_hi_power_state(struct power_supply *psy,
 							int value)
 							{ return -ENOSYS; }
 static inline int power_supply_set_low_power_state(struct power_supply *psy,
-							int value)
-							{ return -ENOSYS; }
-static inline int power_supply_set_allow_detection(struct power_supply *psy,
 							int value)
 							{ return -ENOSYS; }
 static inline int power_supply_is_system_supplied(void) { return -ENOSYS; }
@@ -403,4 +392,4 @@ static inline bool power_supply_is_watt_property(enum power_supply_property psp)
 	return 0;
 }
 
-#endif /* __LINUX_POWER_SUPPLY_H__ */
+#endif 

@@ -33,7 +33,7 @@ static bool __power_supply_is_supplied_by(struct power_supply *supplier,
 	if (!supply->supplied_from && !supplier->supplied_to)
 		return false;
 
-	/* Support both supplied_to and supplied_from modes */
+	
 	if (supply->supplied_from) {
 		if (!supplier->name)
 			return false;
@@ -63,15 +63,7 @@ int power_supply_set_voltage_limit(struct power_supply *psy, int limit)
 }
 EXPORT_SYMBOL(power_supply_set_voltage_limit);
 
-/**
- * power_supply_set_current_limit - set current limit
- * @psy:	the power supply to control
- * @limit:	current limit in uA from the power supply.
- *		0 will disable the power supply.
- *
- * This function will set a maximum supply current from a source
- * and it will disable the charger when limit is 0.
- */
+
 int power_supply_set_current_limit(struct power_supply *psy, int limit)
 {
 	const union power_supply_propval ret = {limit,};
@@ -121,10 +113,7 @@ int power_supply_set_online(struct power_supply *psy, bool enable)
 }
 EXPORT_SYMBOL_GPL(power_supply_set_online);
 
-/** power_supply_set_health_state - set health state of the power supply
- * @psy:       the power supply to control
- * @health:    sets health property of power supply
- */
+
 int power_supply_set_health_state(struct power_supply *psy, int health)
 {
 	const union power_supply_propval ret = {health,};
@@ -136,12 +125,7 @@ int power_supply_set_health_state(struct power_supply *psy, int health)
 }
 EXPORT_SYMBOL(power_supply_set_health_state);
 
-/**
- * power_supply_set_scope - set scope of the power supply
- * @psy:	the power supply to control
- * @scope:	value to set the scope property to, should be from
- *		the SCOPE enum in power_supply.h
- */
+
 int power_supply_set_scope(struct power_supply *psy, int scope)
 {
 	const union power_supply_propval ret = {scope, };
@@ -210,22 +194,6 @@ int power_supply_set_low_power_state(struct power_supply *psy, int value)
 	return -ENXIO;
 }
 EXPORT_SYMBOL(power_supply_set_low_power_state);
-
-/**
- * power_supply_set_allow_detection - set allow_detection for power_supply
- * @psy:	the power supply to control
- * @value:	value to be passed to the power_supply
- */
-int power_supply_set_allow_detection(struct power_supply *psy, int value)
-{
-	const union power_supply_propval ret = {value, };
-
-	if (psy->set_property)
-		return psy->set_property(psy, POWER_SUPPLY_PROP_ALLOW_DETECTION,
-								&ret);
-	return -ENXIO;
-}
-EXPORT_SYMBOL(power_supply_set_allow_detection);
 
 static int __power_supply_changed_work(struct device *dev, void *data)
 {
@@ -327,7 +295,7 @@ static int  __power_supply_find_supply_from_node(struct device *dev,
 	struct device_node *np = (struct device_node *)data;
 	struct power_supply *epsy = dev_get_drvdata(dev);
 
-	/* return error breaks out of class_for_each_device loop */
+	
 	if (epsy->of_node == np)
 		return -EINVAL;
 
@@ -357,11 +325,11 @@ static int power_supply_check_supplies(struct power_supply *psy)
 	struct device_node *np;
 	int cnt = 0;
 
-	/* If there is already a list honor it */
+	
 	if (psy->supplied_from && psy->num_supplies > 0)
 		return 0;
 
-	/* No device node found, nothing to do */
+	
 	if (!psy->of_node)
 		return 0;
 
@@ -379,7 +347,7 @@ static int power_supply_check_supplies(struct power_supply *psy)
 		}
 	} while (np);
 
-	/* All supplies found, allocate char ** array for filling */
+	
 	psy->supplied_from = devm_kzalloc(psy->dev, sizeof(psy->supplied_from),
 					  GFP_KERNEL);
 	if (!psy->supplied_from) {
@@ -514,7 +482,7 @@ static int power_supply_read_temp(struct thermal_zone_device *tzd,
 	psy = tzd->devdata;
 	ret = psy->get_property(psy, POWER_SUPPLY_PROP_TEMP, &val);
 
-	/* Convert tenths of degree Celsius to milli degree Celsius. */
+	
 	if (!ret)
 		*temp = val.intval * 100;
 
@@ -529,7 +497,7 @@ static int psy_register_thermal(struct power_supply *psy)
 {
 	int i;
 
-	/* Register battery zone device psy reports temperature */
+	
 	for (i = 0; i < psy->num_properties; i++) {
 		if (psy->properties[i] == POWER_SUPPLY_PROP_TEMP) {
 			psy->tzd = thermal_zone_device_register(psy->name, 0, 0,
@@ -606,7 +574,7 @@ static int psy_register_cooler(struct power_supply *psy)
 {
 	int i;
 
-	/* Register for cooling device if psy can control charging */
+	
 	for (i = 0; i < psy->num_properties; i++) {
 		if (psy->properties[i] ==
 				POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT) {

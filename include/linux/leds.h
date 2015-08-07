@@ -33,7 +33,6 @@ struct led_classdev {
 	const char		*name;
 	int			 brightness;
 	int			 max_brightness;
-	int			 usr_brightness_req;
 	int			 flags;
 
 	/* Lower 16 bits reflect status */

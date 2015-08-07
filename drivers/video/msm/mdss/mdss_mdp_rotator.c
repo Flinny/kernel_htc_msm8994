@@ -244,8 +244,7 @@ static int mdss_mdp_rot_mgr_remove_free_pipe(void)
 		if (!rot_mgr->rot_pipes[i].pipe)
 			continue;
 
-		if (!rot_mgr->rot_pipes[i].active_session &&
-			!rot_mgr->rot_pipes[i].wait_count)
+		if (!rot_mgr->rot_pipes[i].active_session)
 			break;
 	}
 
@@ -337,7 +336,7 @@ static void mdss_mdp_rot_mgr_del_session(struct mdss_mdp_rotator_session *rot)
 		return;
 	}
 
-	/* if head is empty means that session was already removed */
+	
 	if (list_empty(&rot->head))
 		return;
 
@@ -504,14 +503,7 @@ static int mdss_mdp_rotator_kickoff(struct mdss_mdp_ctl *ctl,
 	return ret;
 }
 
-/**
- * __mdss_mdp_rotator_to_pipe() - setup pipe according to rotator session params
- * @rot:	Pointer to rotator session
- * @pipe:	Pointer to pipe driving structure
- *
- * After calling this the pipe structure will contain all parameters required
- * to use rotator pipe. Note that this function assumes rotator pipe is idle.
- */
+
 static int __mdss_mdp_rotator_to_pipe(struct mdss_mdp_rotator_session *rot,
 		struct mdss_mdp_rot_pipe *rot_pipe)
 {
@@ -657,12 +649,8 @@ static int mdss_mdp_rotator_queue_helper(struct mdss_mdp_rotator_session *rot)
 
 	pr_debug("rotator session=%x start\n", rot->session_id);
 
-	if (rot->use_sync_pt && rot->rot_sync_pt_data->temp_fen_cnt) {
-		mdss_fb_wait_for_fences(rot->rot_sync_pt_data,
-				rot->rot_sync_pt_data->temp_fen,
-				rot->rot_sync_pt_data->temp_fen_cnt);
-		rot->rot_sync_pt_data->temp_fen_cnt = 0;
-	}
+	if (rot->use_sync_pt)
+		mdss_fb_wait_for_fence(rot->rot_sync_pt_data);
 
 	rot_pipe = mdss_mdp_rot_mgr_acquire_pipe(rot);
 	if (!rot_pipe) {
@@ -689,9 +677,6 @@ static int mdss_mdp_rotator_queue(struct mdss_mdp_rotator_session *rot)
 	int ret = 0;
 
 	if (rot->use_sync_pt) {
-		mdss_fb_copy_fence(rot->rot_sync_pt_data,
-				rot->rot_sync_pt_data->temp_fen,
-				&rot->rot_sync_pt_data->temp_fen_cnt);
 		atomic_inc(&rot->rot_sync_pt_data->commit_cnt);
 		queue_work(rot_mgr->rot_work_queue, &rot->commit_work);
 	} else {
@@ -758,7 +743,7 @@ static int mdss_mdp_rotator_config(struct msm_fb_data_type *mfd,
 	struct mdss_overlay_private *mdp5_data = mfd_to_mdp5_data(mfd);
 	u32 bwc_enabled;
 
-	/* keep only flags of interest to rotator */
+	
 	rot->flags = req->flags & (MDP_ROT_90 | MDP_FLIP_LR | MDP_FLIP_UD |
 				   MDP_SECURE_OVERLAY_SESSION);
 

@@ -27,10 +27,10 @@
 #include "mdss_fb.h"
 
 #define MDSS_MDP_DEFAULT_INTR_MASK 0
+#define MDSS_MDP_CURSOR_WIDTH 64
+#define MDSS_MDP_CURSOR_HEIGHT 64
+#define MDSS_MDP_CURSOR_SIZE (MDSS_MDP_CURSOR_WIDTH*MDSS_MDP_CURSOR_WIDTH*4)
 #define MDSS_MDP_PIXEL_RAM_SIZE (50 * 1024)
-
-#define SVS_PLUS_MIN_HW_110 171430000
-#define SVS_PLUS_MAX_HW_110 266670000
 
 #define PHASE_STEP_SHIFT	21
 #define MAX_LINE_BUFFER_WIDTH	2048
@@ -210,7 +210,7 @@ struct mdss_mdp_ctl {
 	int power_state;
 
 	u32 intf_num;
-	u32 slave_intf_num; /* ping-pong split */
+	u32 slave_intf_num; 
 	u32 intf_type;
 
 	u32 opmode;
@@ -248,7 +248,6 @@ struct mdss_mdp_ctl {
 	struct mdss_mdp_mixer *mixer_right;
 	struct mutex lock;
 	struct mutex offlock;
-	struct mutex flush_lock;
 	struct mutex *shared_lock;
 	spinlock_t spin_lock;
 
@@ -297,8 +296,6 @@ struct mdss_mdp_mixer {
 	bool is_right_mixer;
 	struct mdss_mdp_ctl *ctl;
 	struct mdss_mdp_pipe *stage_pipe[MAX_PIPES_PER_LM];
-	u32 next_pipe_map;
-	u32 pipe_mapped;
 };
 
 struct mdss_mdp_format_params {
@@ -309,11 +306,11 @@ struct mdss_mdp_format_params {
 	u8 chroma_sample;
 	u8 solid_fill;
 	u8 fetch_planes;
-	u8 unpack_align_msb;	/* 0 to LSB, 1 to MSB */
-	u8 unpack_tight;	/* 0 for loose, 1 for tight */
-	u8 unpack_count;	/* 0 = 1 component, 1 = 2 component ... */
+	u8 unpack_align_msb;	
+	u8 unpack_tight;	
+	u8 unpack_count;	
 	u8 bpp;
-	u8 alpha_enable;	/*  source has alpha */
+	u8 alpha_enable;	
 	u8 tile;
 	u8 bits[MAX_PLANES];
 	u8 element[MAX_PLANES];
@@ -373,7 +370,6 @@ struct pp_hist_col_info {
 	spinlock_t hist_lock;
 	char __iomem *base;
 	u32 intr_shift;
-	u32 disp_num;
 };
 
 struct mdss_mdp_ad {
@@ -461,14 +457,7 @@ struct mdss_mdp_pipe {
 	u32 flags;
 	u32 bwc_mode;
 
-	/*
-	 * src_split_req is valid only for right layer mixer.
-	 *
-	 * VIDEO mode panels: Always true if source split is enabled.
-	 * CMD mode panels: Only true if source split is enabled and
-	 *                  for a given commit left and right both ROIs
-	 *                  are valid.
-	 */
+	
 	bool src_split_req;
 	bool is_right_blend;
 
@@ -536,11 +525,11 @@ struct mdss_overlay_private {
 	struct list_head rot_proc_list;
 	bool mixer_swap;
 
-	/* list of buffers that can be reused */
+	
 	struct list_head bufs_chunks;
 	struct list_head bufs_pool;
 	struct list_head bufs_used;
-	/* list of buffers which should be freed during cleanup stage */
+	
 	struct list_head bufs_freelist;
 
 	int ad_state;
@@ -557,7 +546,7 @@ struct mdss_overlay_private {
 	int retire_cnt;
 	bool kickoff_released;
 	u32 cursor_ndx[2];
-	bool dyn_mode_switch; /* Used in prepare, bw calc for new mode */
+	bool dyn_mode_switch; 
 };
 
 struct mdss_mdp_set_ot_params {
@@ -828,19 +817,6 @@ static inline u32 left_lm_w_from_mfd(struct msm_fb_data_type *mfd)
 	return width;
 }
 
-static inline u32 mdss_mdp_get_cursor_frame_size(struct mdss_data_type *mdata)
-{
-	return mdata->max_cursor_size *  mdata->max_cursor_size * 4;
-}
-
-static inline bool __is_mdp_clk_svs_plus_range(struct mdss_data_type *mdata,
-		u32 rate)
-{
-	return (mdss_has_quirk(mdata, MDSS_QUIRK_SVS_PLUS_VOTING)) &&
-		(rate > mdata->svs_plus_min) &&
-		(rate <= mdata->svs_plus_max);
-}
-
 irqreturn_t mdss_mdp_isr(int irq, void *ptr);
 int mdss_iommu_attach(struct mdss_data_type *mdata);
 int mdss_iommu_dettach(struct mdss_data_type *mdata);
@@ -1027,7 +1003,6 @@ int mdss_mdp_mixer_addr_setup(struct mdss_data_type *mdata, u32 *mixer_offsets,
 int mdss_mdp_ctl_addr_setup(struct mdss_data_type *mdata, u32 *ctl_offsets,
 		u32 *wb_offsets, u32 len);
 
-void mdss_mdp_pipe_clk_force_off(struct mdss_mdp_pipe *pipe);
 int mdss_mdp_pipe_fetch_halt(struct mdss_mdp_pipe *pipe);
 int mdss_mdp_pipe_panic_signal_ctrl(struct mdss_mdp_pipe *pipe, bool enable);
 void mdss_mdp_bwcpanic_ctrl(struct mdss_data_type *mdata, bool enable);
@@ -1102,4 +1077,4 @@ int mdss_mdp_cmd_set_autorefresh_mode(struct mdss_mdp_ctl *ctl,
 int mdss_mdp_ctl_cmd_autorefresh_enable(struct mdss_mdp_ctl *ctl,
 		int frame_cnt);
 
-#endif /* MDSS_MDP_H */
+#endif 

@@ -31,7 +31,6 @@
 struct wakeup_source {
 	const char 		*name;
 	struct list_head	entry;
-	struct rcu_head		rcu;
 	spinlock_t		lock;
 	struct timer_list	timer;
 	unsigned long		timer_expires;
@@ -86,7 +85,7 @@ extern void pm_wakeup_event(struct device *dev, unsigned int msec);
 void htc_print_active_wakeup_sources(void);
 #endif
 
-#else /* !CONFIG_PM_SLEEP */
+#else 
 
 static inline void device_set_wakeup_capable(struct device *dev, bool capable)
 {
@@ -167,7 +166,7 @@ static inline void pm_wakeup_event(struct device *dev, unsigned int msec) {}
 static inline void htc_print_active_wakeup_sources(void) {}
 #endif
 
-#endif /* !CONFIG_PM_SLEEP */
+#endif 
 
 static inline void wakeup_source_init(struct wakeup_source *ws,
 				      const char *name)
@@ -182,4 +181,4 @@ static inline void wakeup_source_trash(struct wakeup_source *ws)
 	wakeup_source_drop(ws);
 }
 
-#endif /* _LINUX_PM_WAKEUP_H */
+#endif 

@@ -23,7 +23,7 @@
 #include "mdss_panel.h"
 #include "mdss_dsi_cmd.h"
 
-#define MMSS_SERDES_BASE_PHY 0x04f01000 /* mmss (De)Serializer CFG */
+#define MMSS_SERDES_BASE_PHY 0x04f01000 
 
 #define MIPI_OUTP(addr, data) writel_relaxed((data), (addr))
 #define MIPI_INP(addr) readl_relaxed(addr)
@@ -45,18 +45,18 @@
 #define MIPI_DSI_PANEL_720P_PT	8
 #define DSI_PANEL_MAX	8
 
-#define MDSS_DSI_HW_REV_100		0x10000000	/* 8974    */
-#define MDSS_DSI_HW_REV_100_1		0x10000001	/* 8x26    */
-#define MDSS_DSI_HW_REV_100_2		0x10000002	/* 8x26v2  */
-#define MDSS_DSI_HW_REV_101		0x10010000	/* 8974v2  */
-#define MDSS_DSI_HW_REV_101_1		0x10010001	/* 8974Pro */
-#define MDSS_DSI_HW_REV_102		0x10020000	/* 8084    */
-#define MDSS_DSI_HW_REV_103		0x10030000	/* 8994    */
-#define MDSS_DSI_HW_REV_103_1		0x10030001	/* 8916/8936 */
+#define MDSS_DSI_HW_REV_100		0x10000000	
+#define MDSS_DSI_HW_REV_100_1		0x10000001	
+#define MDSS_DSI_HW_REV_100_2		0x10000002	
+#define MDSS_DSI_HW_REV_101		0x10010000	
+#define MDSS_DSI_HW_REV_101_1		0x10010001	
+#define MDSS_DSI_HW_REV_102		0x10020000	
+#define MDSS_DSI_HW_REV_103		0x10030000	
+#define MDSS_DSI_HW_REV_103_1		0x10030001	
 
 #define NONE_PANEL "none"
 
-enum {		/* mipi dsi panel */
+enum {		
 	DSI_VIDEO_MODE,
 	DSI_CMD_MODE,
 };
@@ -151,7 +151,6 @@ enum dsi_pm_type {
 #define DSI_CMD_DST_FORMAT_RGB666	7
 #define DSI_CMD_DST_FORMAT_RGB888	8
 
-#define DSI_INTR_DESJEW_MASK			BIT(31)
 #define DSI_INTR_DYNAMIC_REFRESH_MASK		BIT(29)
 #define DSI_INTR_DYNAMIC_REFRESH_DONE		BIT(28)
 #define DSI_INTR_ERROR_MASK		BIT(25)
@@ -166,16 +165,7 @@ enum dsi_pm_type {
 #define DSI_INTR_CMD_DMA_DONE		BIT(0)
 #define DSI_INTR_TOTAL_MASK		0x2222AA02
 
-#define DSI_INTR_MASK_ALL	\
-		(DSI_INTR_DESJEW_MASK | \
-		DSI_INTR_DYNAMIC_REFRESH_MASK | \
-		DSI_INTR_ERROR_MASK | \
-		DSI_INTR_BTA_DONE_MASK | \
-		DSI_INTR_VIDEO_DONE_MASK | \
-		DSI_INTR_CMD_MDP_DONE_MASK | \
-		DSI_INTR_CMD_DMA_DONE_MASK)
-
-#define DSI_CMD_TRIGGER_NONE		0x0	/* mdp trigger */
+#define DSI_CMD_TRIGGER_NONE		0x0	
 #define DSI_CMD_TRIGGER_TE		0x02
 #define DSI_CMD_TRIGGER_SW		0x04
 #define DSI_CMD_TRIGGER_SW_SEOF		0x05	
@@ -203,8 +193,8 @@ struct dsiphy_pll_divider_config {
 	u32 clk_rate;
 	u32 fb_divider;
 	u32 ref_divider_ratio;
-	u32 bit_clk_divider;	/* oCLK1 */
-	u32 byte_clk_divider;	/* oCLK2 */
+	u32 bit_clk_divider;	
+	u32 byte_clk_divider;	
 	u32 analog_posDiv;
 	u32 digital_posDiv;
 };
@@ -314,11 +304,11 @@ enum BACKLIGHT_TO_BRIGHTNESS_HTC_V1 {
 #define DSI_EV_MDP_BUSY_RELEASE		0x80000000
 
 struct mdss_dsi_ctrl_pdata {
-	int ndx;	/* panel_num */
+	int ndx;	
 	int (*on) (struct mdss_panel_data *pdata);
 	int (*off) (struct mdss_panel_data *pdata);
 	int (*low_power_config) (struct mdss_panel_data *pdata, int enable);
-	int (*set_col_page_addr)(struct mdss_panel_data *pdata, bool force);
+	int (*set_col_page_addr) (struct mdss_panel_data *pdata);
 	int (*check_status) (struct mdss_dsi_ctrl_pdata *pdata);
 	int (*check_read_status) (struct mdss_dsi_ctrl_pdata *pdata);
 	int (*cmdlist_commit)(struct mdss_dsi_ctrl_pdata *ctrl, int from_mdp);
@@ -355,7 +345,7 @@ struct mdss_dsi_ctrl_pdata {
 	int disp_en_gpio;
 	int bklt_en_gpio;
 	int mode_gpio;
-	int bklt_ctrl;	/* backlight ctrl */
+	int bklt_ctrl;	
 	bool pwm_pmi;
 	int pwm_period;
 	int pwm_pmic_gpio;
@@ -378,7 +368,7 @@ struct mdss_dsi_ctrl_pdata {
 	struct dsi_drv_cm_data *shared_ctrl_data;
 	u32 pclk_rate;
 	u32 byte_clk_rate;
-	bool refresh_clk_rate; /* flag to recalculate clk_rate */
+	bool refresh_clk_rate; 
 	struct dss_module_power power_data[DSI_MAX_PM];
 	u32 dsi_irq_mask;
 	struct mdss_hw *dsi_hw;
@@ -407,8 +397,8 @@ struct mdss_dsi_ctrl_pdata {
 	int mdp_busy;
 	struct mutex mutex;
 	struct mutex cmd_mutex;
-	struct regulator *lab; /* vreg handle */
-	struct regulator *ibb; /* vreg handle */
+	struct regulator *lab; 
+	struct regulator *ibb; 
 	struct mutex clk_lane_mutex;
 
 	u32 ulps_clamp_ctrl_off;
@@ -451,7 +441,6 @@ struct mdss_dsi_ctrl_pdata {
 
 	
 	u16 *brt_code_table;
-	bool dfps_status;	/* dynamic refresh status */
 };
 
 struct dsi_status_data {
@@ -657,4 +646,4 @@ static inline bool mdss_dsi_cmp_panel_reg(struct dsi_buf status_buf,
 	return status_buf.data[i] == status_val[i];
 }
 
-#endif /* MDSS_DSI_H */
+#endif 

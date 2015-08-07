@@ -40,7 +40,7 @@
 #include <linux/mutex.h>
 #include <linux/futex.h>
 #include <linux/pipe_fs_i.h>
-#include <linux/audit.h> /* for audit_free() */
+#include <linux/audit.h> 
 #include <linux/resource.h>
 #include <linux/blkdev.h>
 #include <linux/task_io_accounting_ops.h>
@@ -75,7 +75,6 @@ static void __unhash_process(struct task_struct *p, bool group_dead)
 		__this_cpu_dec(process_counts);
 	}
 	list_del_rcu(&p->thread_group);
-	list_del_rcu(&p->thread_node);
 }
 
 static void __exit_signal(struct task_struct *tsk)
@@ -372,7 +371,7 @@ static void exit_mm(struct task_struct * tsk)
 	}
 	atomic_inc(&mm->mm_count);
 	BUG_ON(mm != tsk->active_mm);
-	/* more a memory barrier than a real lock */
+	
 	task_lock(tsk);
 	tsk->mm = NULL;
 	up_read(&mm->mmap_sem);
@@ -514,12 +513,12 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 
 	tsk->exit_state = autoreap ? EXIT_DEAD : EXIT_ZOMBIE;
 
-	/* mt-exec, de_thread() is waiting for group leader */
+	
 	if (unlikely(tsk->signal->notify_count < 0))
 		wake_up_process(tsk->signal->group_exit_task);
 	write_unlock_irq(&tasklist_lock);
 
-	/* If the process is dead, release it - nobody will wait for it */
+	
 	if (autoreap)
 		release_task(tsk);
 }
@@ -581,15 +580,6 @@ void do_exit(long code)
 		printk(KERN_ALERT
 			"Fixing recursive fault but reboot is needed!\n");
 #endif
-		/*
-		 * We can do this unlocked here. The futex code uses
-		 * this flag just to verify whether the pi state
-		 * cleanup has been done or not. In the worst case it
-		 * loops once more. We pretend that the cleanup was
-		 * done as there is no way to return. Either the
-		 * OWNER_DIED bit is set by now or we push the blocked
-		 * task into the wait for ever nirwana as well.
-		 */
 		tsk->flags |= PF_EXITPIDONE;
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule();
@@ -608,7 +598,7 @@ void do_exit(long code)
 				preempt_count());
 
 	acct_update_integrals(tsk);
-	/* sync mm's RSS info before statistics gathering */
+	
 	if (tsk->mm)
 		sync_mm_rss(tsk->mm);
 	group_dead = atomic_dec_and_test(&tsk->signal->live);
@@ -727,7 +717,7 @@ do_group_exit(int exit_code)
 		struct sighand_struct *const sighand = current->sighand;
 		spin_lock_irq(&sighand->siglock);
 		if (signal_group_exit(sig))
-			/* Another thread got here before we took the lock.  */
+			
 			exit_code = sig->group_exit_code;
 		else {
 			sig->group_exit_code = exit_code;
@@ -1029,7 +1019,7 @@ static int wait_task_continued(struct wait_opts *wo, struct task_struct *p)
 		return 0;
 
 	spin_lock_irq(&p->sighand->siglock);
-	/* Re-check with the lock held.  */
+	
 	if (!(p->signal->flags & SIGNAL_STOP_CONTINUED)) {
 		spin_unlock_irq(&p->sighand->siglock);
 		return 0;
@@ -1288,7 +1278,7 @@ SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 	} else if (upid == 0) {
 		type = PIDTYPE_PGID;
 		pid = get_task_pid(current, PIDTYPE_PGID);
-	} else /* upid > 0 */ {
+	} else  {
 		type = PIDTYPE_PID;
 		pid = find_get_pid(upid);
 	}

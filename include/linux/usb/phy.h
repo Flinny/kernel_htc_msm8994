@@ -319,4 +319,4 @@ static inline const char *usb_phy_type_string(enum usb_phy_type type)
 		return "UNKNOWN PHY TYPE";
 	}
 }
-#endif /* __LINUX_USB_PHY_H */
+#endif 

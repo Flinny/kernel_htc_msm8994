@@ -30,6 +30,11 @@
 #include "msm-pcm-voice-v2.h"
 #include "q6voice.h"
 
+#undef pr_info
+#undef pr_err
+#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
+#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
+
 static struct msm_voice voice_info[VOICE_SESSION_INDEX_MAX];
 
 static struct snd_pcm_hardware msm_pcm_hardware = {
@@ -602,8 +607,6 @@ static struct snd_kcontrol_new msm_voice_controls[] = {
 		.info	= msm_voice_cvd_version_info,
 		.get	= msm_voice_cvd_version_get,
 	},
-	/* Dummy control to expose stereo recording support in kernel to user-space */
-	SOC_SINGLE_EXT("Stereo Recording", SND_SOC_NOPM, 1, VSID_MAX, 0, NULL, NULL),
 };
 
 static struct snd_pcm_ops msm_pcm_ops = {

@@ -28,17 +28,7 @@
 #include <linux/types.h>
 
 
-/**
- * enum nl80211_dfs_state - DFS states for channels
- *
- * Channel states used by the DFS code.
- *
- * @IEEE80211_DFS_USABLE: The channel can be used, but channel availability
- *	check (CAC) must be performed before using it for AP or IBSS.
- * @IEEE80211_DFS_UNAVAILABLE: A radar has been detected on this channel, it
- *	is therefore marked as not available.
- * @IEEE80211_DFS_AVAILABLE: The channel has been CAC checked and is available.
- */
+
 
 enum nl80211_commands {
 	NL80211_CMD_UNSPEC,
@@ -83,7 +73,7 @@ enum nl80211_commands {
 	NL80211_CMD_GET_MESH_CONFIG,
 	NL80211_CMD_SET_MESH_CONFIG,
 
-	NL80211_CMD_SET_MGMT_EXTRA_IE /* reserved; not used */,
+	NL80211_CMD_SET_MGMT_EXTRA_IE ,
 
 	NL80211_CMD_GET_REG,
 
@@ -299,7 +289,7 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_SCAN_FREQUENCIES,
 	NL80211_ATTR_SCAN_SSIDS,
-	NL80211_ATTR_GENERATION, /* replaces old SCAN_GENERATION */
+	NL80211_ATTR_GENERATION, 
 	NL80211_ATTR_BSS,
 
 	NL80211_ATTR_REG_INITIATOR,
@@ -564,8 +554,6 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_TDLS_PEER_CAPABILITY,
 
-        NL80211_ATTR_IFACE_SOCKET_OWNER,
-
 	NL80211_ATTR_AUTHORIZATION_STATUS,
 	NL80211_ATTR_KEY_REPLAY_CTR,
 	NL80211_ATTR_PSK,
@@ -576,6 +564,12 @@ enum nl80211_attrs {
 	NL80211_ATTR_PMK_LEN,
 	NL80211_ATTR_PTK_KCK,
 	NL80211_ATTR_PTK_KEK,
+
+    
+    NL80211_ATTR_IFACE_SOCKET_OWNER,
+    
+
+	
 
 	__NL80211_ATTR_AFTER_LAST,
 	NL80211_ATTR_MAX = __NL80211_ATTR_AFTER_LAST - 1
@@ -974,7 +968,7 @@ enum nl80211_txq_attr {
 	NL80211_TXQ_ATTR_CWMAX,
 	NL80211_TXQ_ATTR_AIFS,
 
-	/* keep last */
+	
 	__NL80211_TXQ_ATTR_AFTER_LAST,
 	NL80211_TXQ_ATTR_MAX = __NL80211_TXQ_ATTR_AFTER_LAST - 1
 };

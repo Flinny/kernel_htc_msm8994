@@ -161,9 +161,7 @@ enum flashlight_brightness_attribute_definition
     FBAD_FULL       = 255, 
 };
 
-/*
- * Configurations for each individual LED
- */
+
 struct flash_node_data {
 	struct spmi_device		*spmi_dev;
 	struct led_classdev		cdev;
@@ -283,7 +281,7 @@ static ssize_t qpnp_led_strobe_type_store(struct device *dev,
 
 	flash_node = container_of(led_cdev, struct flash_node_data, cdev);
 
-	/* '0' for sw strobe; '1' for hw strobe */
+	
 	if (state == 1)
 		flash_node->trigger |= FLASH_LED_STROBE_TYPE_HW;
 	else
@@ -342,7 +340,7 @@ static ssize_t qpnp_flash_led_current_derate_store(struct device *dev,
 	flash_node = container_of(led_cdev, struct flash_node_data, cdev);
 	led = dev_get_drvdata(&flash_node->spmi_dev->dev);
 
-	/*'0' for disable derate feature; non-zero to enable derate feature */
+	
 	if (val == 0)
 		led->pdata->power_detect_en = false;
 	else
@@ -553,7 +551,7 @@ static int qpnp_flash_led_module_disable(struct qpnp_flash_led *led,
 		if (led->battery_psy) {
 			psy_prop.intval = false;
 			rc = led->battery_psy->set_property(led->battery_psy,
-						POWER_SUPPLY_PROP_FLASH_ACTIVE,
+						POWER_SUPPLY_PROP_OTG_PULSE_SKIP_ENABLE,	
 								&psy_prop);
 			if (rc) {
 				dev_err(&led->spmi_dev->dev,
@@ -1078,7 +1076,7 @@ static void qpnp_flash_led_work(struct work_struct *work)
 
 		psy_prop.intval = true;
 		rc = led->battery_psy->set_property(led->battery_psy,
-						POWER_SUPPLY_PROP_FLASH_ACTIVE,
+						POWER_SUPPLY_PROP_OTG_PULSE_SKIP_ENABLE,	
 								&psy_prop);
 		if (rc) {
 			dev_err(&led->spmi_dev->dev,
